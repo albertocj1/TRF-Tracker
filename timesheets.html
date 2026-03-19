@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrowdSource – Timesheets</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f5f7;
+    --sidebar-bg: #ffffff;
+    --topbar-bg: #1a1a2e;
+    --accent: #1565c0;
+    --accent-light: #e8f0fe;
+    --text-primary: #1a1a2e;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --border: #e5e7eb;
+    --row-hover: #f9fafb;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
+
+    /* row type colors */
+    --weekend-bg: #f8faff;
+    --weekend-text: #9ca3af;
+    --absent-bg: #fef2f2;
+    --late-bg: #fff8e1;
+    --total-bg: #f0f4ff;
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── TOPBAR ── */
+  .topbar { background: var(--topbar-bg); display: flex; align-items: center; padding: 0 28px; height: 70px; gap: 20px; flex-shrink: 0; }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+  .logo-img { height: 40px; width: auto; object-fit: contain; }
+  .logo-text { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: .5px; }
+  .logo-text span { color: #64b5f6; }
+  .topbar-user { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .topbar-user-name { text-align: right; color: #fff; line-height: 1.3; }
+  .topbar-user-name strong { display: block; font-size: 13.5px; font-weight: 600; }
+  .topbar-user-name span { font-size: 12px; color: rgba(255,255,255,.55); }
+  .avatar { width: 40px; height: 40px; background: rgba(255,255,255,.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.8); }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 210px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 10px 20px; font-size: 13.5px; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: background .15s, color .15s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--accent-light); color: var(--accent); }
+  .nav-item.active { color: var(--accent); background: var(--accent-light); font-weight: 600; }
+  .nav-item svg { flex-shrink: 0; opacity: .7; }
+  .nav-item.active svg { opacity: 1; }
+  .nav-divider { height: 1px; background: var(--border); margin: 12px 16px; }
+  .nav-bottom { margin-top: auto; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; }
+  .main::-webkit-scrollbar { width: 6px; }
+  .main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+  /* ── PAGE HEADER ── */
+  .page-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .page-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── CONTROLS ── */
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .employee-select-wrap { position: relative; }
+  .employee-select {
+    appearance: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 36px 9px 14px;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+    cursor: pointer;
+    outline: none;
+    min-width: 220px;
+    transition: border .2s;
+  }
+  .employee-select:focus { border-color: var(--accent); }
+
+  .month-select {
+    appearance: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 36px 9px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+    cursor: pointer;
+    outline: none;
+    transition: border .2s;
+  }
+  .month-select:focus { border-color: var(--accent); }
+
+  .btn-refresh { display: flex; align-items: center; gap: 6px; background: #fff; color: var(--text-secondary); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 14px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: border .2s, color .2s; }
+  .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-refresh.loading svg { animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── SUMMARY CARDS ── */
+  .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow-sm); }
+  .card-label { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .card-value { font-size: 22px; font-weight: 700; color: var(--text-primary); font-family: 'DM Mono', monospace; }
+  .card-value.accent  { color: var(--accent); }
+  .card-value.danger  { color: #dc2626; }
+  .card-value.warning { color: #b45309; }
+  .card-value.success { color: #15803d; }
+
+  /* ── TABLE CARD ── */
+  .table-card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 320px); }
+  .table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+  .table-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+  table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+  thead th {
+    position: sticky; top: 0; z-index: 2;
+    text-align: center;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--text-muted); padding: 11px 10px;
+    background: #fafbfc; border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th.col-date { text-align: left; padding-left: 16px; }
+  thead th.col-notes { text-align: left; }
+
+  /* column groups */
+  thead tr.group-row th {
+    font-size: 10px; font-weight: 800; letter-spacing: .1em;
+    padding: 6px 10px; border-bottom: none;
+  }
+  thead tr.group-row th.g-time   { background: #eff6ff; color: #1d4ed8; }
+  thead tr.group-row th.g-pay    { background: #f0fdf4; color: #15803d; }
+  thead tr.group-row th.g-ot     { background: #fefce8; color: #92400e; }
+  thead tr.group-row th.g-trf    { background: #faf5ff; color: #6b21a8; }
+  thead tr.group-row th.g-blank  { background: #fafbfc; }
+
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--row-hover); }
+  tbody td { padding: 10px 10px; font-size: 12.5px; color: var(--text-primary); text-align: center; vertical-align: middle; }
+  tbody td.col-date { text-align: left; padding-left: 16px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+  tbody td.col-day  { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+  tbody td.col-mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+  tbody td.col-notes { text-align: left; font-size: 12px; color: var(--text-secondary); max-width: 160px; }
+
+  /* row types */
+  tr.row-weekend td { color: var(--weekend-text) !important; background: var(--weekend-bg); }
+  tr.row-weekend td.col-date { color: #a5b4fc !important; }
+  tr.row-absent td { background: var(--absent-bg); }
+  tr.row-absent td.col-absent { color: #dc2626; font-weight: 700; }
+  tr.row-late td { background: var(--late-bg); }
+  tr.row-late td.col-late { color: #b45309; font-weight: 700; }
+  tr.row-total { background: var(--total-bg) !important; border-top: 2px solid #c7d7f9 !important; }
+  tr.row-total td { font-weight: 700; font-size: 12px; color: var(--accent); font-family: 'DM Mono', monospace; }
+  tr.row-total td.col-date { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+
+  /* badges */
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 3px 9px; border-radius: 20px; }
+  .badge-pending  { background: #fff8e1; color: #b45309; }
+  .badge-approved { background: #e6f9f0; color: #15803d; }
+  .badge-rejected { background: #fef2f2; color: #dc2626; }
+  .trf-link { color: var(--accent); font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
+  .trf-link:hover { text-decoration: underline; }
+  .no-val { color: #d1d5db; font-size: 11px; }
+
+  /* ── LOADING ── */
+  .state-row td { text-align: center; padding: 48px !important; color: var(--text-muted); font-size: 13.5px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
+
+  /* half-month divider */
+  tr.divider td { padding: 0 !important; height: 6px; background: #f4f5f7; border-bottom: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a class="logo" href="#">
+    <img src="logo.png" alt="CrowdSource Logo" class="logo-img">
+    <span class="logo-text"><span>CROWD</span>SOURCE</span>
+  </a>
+  <div class="topbar-user">
+    <div class="topbar-user-name">
+      <strong>Lebron James</strong>
+      <span>Human Resources</span>
+    </div>
+    <div class="avatar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <a class="nav-item" href="index.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      TRF Dashboard
+    </a>
+    <a class="nav-item active" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Timesheets
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      HR Closing Letters
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      HR Database
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+      Onboarding
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Background Investigation
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      SIL Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Exit Letters
+    </a>
+    <div class="nav-divider"></div>
+    <div class="nav-bottom">
+      <a class="nav-item" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Help
+      </a>
+      <a class="nav-item" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </a>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">Timesheets</div>
+        <div class="page-subtitle" id="pageSubtitle">Select an employee to view their timesheet</div>
+      </div>
+      <div class="controls">
+        <select class="employee-select" id="employeeSelect">
+          <option value="">— Select Employee —</option>
+        </select>
+        <select class="month-select" id="monthSelect">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3" selected>March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <select class="month-select" id="yearSelect"></select>
+        <button class="btn-refresh" id="refreshBtn" onclick="loadTimesheet()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="summary-cards" id="summaryCards" style="display:none">
+      <div class="card">
+        <div class="card-label">Total Hours</div>
+        <div class="card-value accent" id="sumHours">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Absent Days</div>
+        <div class="card-value danger" id="sumAbsent">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Late / Undertime</div>
+        <div class="card-value warning" id="sumLate">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">OT Regular</div>
+        <div class="card-value success" id="sumOTReg">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">OT Holiday</div>
+        <div class="card-value success" id="sumOTHol">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Night Diff</div>
+        <div class="card-value" id="sumNightDif">—</div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr class="group-row">
+              <th class="g-blank" colspan="2"></th>
+              <th class="g-time" colspan="4">Time</th>
+              <th class="g-pay" colspan="3">Attendance</th>
+              <th class="g-ot" colspan="4">Overtime</th>
+              <th class="g-trf" colspan="4">TRF</th>
+            </tr>
+            <tr>
+              <th class="col-date" style="text-align:left">Date</th>
+              <th>Day</th>
+              <th>Time In</th>
+              <th>Break In</th>
+              <th>Break Out</th>
+              <th>Time Out</th>
+              <th>Hours</th>
+              <th>Absent</th>
+              <th>Late / UT</th>
+              <th>Night Dif</th>
+              <th>OT Hol</th>
+              <th>OT S.Hol</th>
+              <th>OT Reg</th>
+              <th>OT Rest</th>
+              <th class="col-notes">Notes</th>
+              <th>Status</th>
+              <th>Sanction</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody id="timesheetBody">
+            <tr class="state-row">
+              <td colspan="18">Select an employee above to load their timesheet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const N8N_TIMESHEET_URL = 'https://primary-production-a810.up.railway.app/webhook/get-timesheet';
+
+  const EMPLOYEES = [
+    'Alcantara, Ma. Cristina','Beles, Rhea Belle','Cayetano, Cheennee',
+    'Hilario, Yvon Marjori','Panganiban, Danila Mae','Pedroche, Maria Beatrice',
+    'Suarez, Kimberlyn Vianca','Tacaca, Adrian Raye','Torregoza, Don Howard',
+    'Escaño, Ruel','Vinarao, Anthony','Alberto, Christian Joshua',
+    'Morales, Laiza','Rodil, Marco Elijah','Tenefrancia, Ayra Lexi',
+    'Tayao, Christopher Andrei'
+  ];
+
+  const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  const MON_SHORT = ['Jan','Feb','Mar','Apr','May','Jun',
+                     'Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // ── Init dropdowns ──
+  const empSel = document.getElementById('employeeSelect');
+  EMPLOYEES.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    empSel.appendChild(opt);
+  });
+  const yearSel = document.getElementById('yearSelect');
+  const curYear = new Date().getFullYear();
+  for (let y = curYear; y >= curYear - 3; y--) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    if (y === curYear) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+
+  // ── Helpers ──
+  function fmt(v) {
+    return (v === null || v === undefined || v === '') ? '<span class="no-val">—</span>' : v;
+  }
+
+  // Parse "Mar 1" or "Mar 16" into a Date for the given year
+  function parseDateLabel(label, year) {
+    if (!label || typeof label !== 'string') return null;
+    const clean = label.trim();
+    const parts = clean.split(' ');
+    if (parts.length < 2) return null;
+    const mIdx = MON_SHORT.findIndex(m => m.toLowerCase() === parts[0].toLowerCase());
+    if (mIdx === -1) return null;
+    return new Date(year, mIdx, parseInt(parts[1]));
+  }
+
+  // "8:01:00" or "40:34:00" → decimal hours
+  function timeStrToHours(str) {
+    if (!str || str === '0:00:00' || str === '-8:00:00') return 0;
+    const parts = str.split(':');
+    if (parts.length < 2) return 0;
+    const h = parseInt(parts[0]) || 0;
+    const m = parseInt(parts[1]) || 0;
+    return h + m / 60;
+  }
+
+  // Display hours nicely: "8:01:00" → "8:01"
+  function fmtHours(str) {
+    if (!str || str === '0:00:00') return '<span class="no-val">—</span>';
+    if (str.startsWith('-')) return '<span style="color:#dc2626">'+str+'</span>';
+    const parts = str.split(':');
+    return parts[0] + ':' + (parts[1] || '00');
+  }
+
+  function fmtNum(v) {
+    if (v === null || v === undefined || v === '' || parseFloat(v) === 0) return '<span class="no-val">—</span>';
+    return parseFloat(v).toFixed(2);
+  }
+
+  function fmtTime(v) {
+    if (!v) return '<span class="no-val">—</span>';
+    return v;
+  }
+
+  function statusBadge(s) {
+    if (!s) return '<span class="no-val">—</span>';
+    const sl = s.toLowerCase();
+    if (sl === 'approved' || sl === 'excused') return '<span class="badge badge-approved">'+s+'</span>';
+    if (sl === 'rejected')                      return '<span class="badge badge-rejected">'+s+'</span>';
+    return '<span class="badge badge-pending">'+s+'</span>';
+  }
+
+  function getDaysInMonth(year, month) {
+    const days = [];
+    const count = new Date(year, month, 0).getDate();
+    for (let d = 1; d <= count; d++) days.push(new Date(year, month - 1, d));
+    return days;
+  }
+
+  // ── Render ──
+  function renderTimesheet(rawRows, year, month) {
+    const tbody = document.getElementById('timesheetBody');
+    const days  = getDaysInMonth(year, month);
+
+    // Map rows by "Mar 1" → object, skip TOTAL / header / blank rows
+    const byLabel = {};
+    rawRows.forEach(r => {
+      const raw = r['DATE'] || r['date'] || '';
+      if (!raw || raw === 'DATE' || raw.toString().toUpperCase().includes('TOTAL')) return;
+      byLabel[raw.toString().trim()] = r;
+    });
+
+    // Accumulators
+    let h1H=0,h1A=0,h1L=0,h1O=0,h1Oh=0,h1N=0;
+    let h2H=0,h2A=0,h2L=0,h2O=0,h2Oh=0,h2N=0;
+
+    const makeRow = (date) => {
+      const mon   = MON_SHORT[date.getMonth()];
+      const label = mon + ' ' + date.getDate();
+      const r     = byLabel[label] || {};
+      const day   = DAYS[date.getDay()];
+      const weekend = date.getDay() === 0 || date.getDay() === 6;
+
+      // Field mapping — Google Sheets returns column headers as keys
+      const timeIn   = r['TIME IN']          || r['time_in']    || '';
+      const breakIn  = r['Break In']         || r['break_in']   || '';
+      const breakOut = r['Break Out']        || r['break_out']  || '';
+      const timeOut  = r['TIME OUT']         || r['time_out']   || '';
+      const hoursStr = r['HOURS']            || r['hours']      || '';
+      const absent   = parseFloat(r['Absent']          || r['absent']        || 0);
+      const late     = parseFloat(r['Late / Undertime']|| r['late_undertime']|| 0);
+      const nightDif = parseFloat(r['Night Dif']       || r['night_dif']     || 0);
+      const otHol    = parseFloat(r['OT Holiday']      || r['ot_holiday']    || 0);
+      const otSHol   = parseFloat(r['OT S Holiday']    || r['ot_s_holiday']  || 0);
+      const otReg    = parseFloat(r['OT Reg']          || r['ot_reg']        || 0);
+      const otRest   = parseFloat(r['OT Rest']         || r['ot_rest']       || 0);
+      const notes    = r['NOTES']            || r['notes']   || '';
+      const trfLink  = r['TRF']              || r['trf']     || '';
+      const status   = r['Status']           || r['status']  || '';
+      const sanction = r['Sanction']         || r['sanction']|| '';
+
+      const hoursNum = timeStrToHours(hoursStr);
+
+      // Accumulate into correct half
+      if (date.getDate() <= 15) {
+        h1H += hoursNum; h1A += absent; h1L += late; h1O += otReg; h1Oh += otHol; h1N += nightDif;
+      } else {
+        h2H += hoursNum; h2A += absent; h2L += late; h2O += otReg; h2Oh += otHol; h2N += nightDif;
+      }
+
+      let rowClass = '';
+      if (weekend)      rowClass = 'row-weekend';
+      else if (absent>0) rowClass = 'row-absent';
+      else if (late>0)   rowClass = 'row-late';
+
+      const trfCell = trfLink
+        ? `<a class="trf-link" href="${trfLink}" target="_blank">View <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`
+        : '<span class="no-val">—</span>';
+
+      return `<tr class="${rowClass}">
+        <td class="col-date">${label}</td>
+        <td class="col-day">${day}</td>
+        <td class="col-mono">${fmtTime(timeIn)}</td>
+        <td class="col-mono">${fmtTime(breakIn)}</td>
+        <td class="col-mono">${fmtTime(breakOut)}</td>
+        <td class="col-mono">${fmtTime(timeOut)}</td>
+        <td class="col-mono">${fmtHours(hoursStr)}</td>
+        <td class="col-absent">${absent>0 ? fmtNum(absent) : '<span class="no-val">—</span>'}</td>
+        <td class="col-late">${late>0 ? fmtNum(late) : '<span class="no-val">—</span>'}</td>
+        <td class="col-mono">${nightDif>0 ? fmtNum(nightDif) : '<span class="no-val">—</span>'}</td>
+        <td class="col-mono">${otHol>0 ? fmtNum(otHol) : '<span class="no-val">—</span>'}</td>
+        <td class="col-mono">${otSHol>0 ? fmtNum(otSHol) : '<span class="no-val">—</span>'}</td>
+        <td class="col-mono">${otReg>0 ? fmtNum(otReg) : '<span class="no-val">—</span>'}</td>
+        <td class="col-mono">${otRest>0 ? fmtNum(otRest) : '<span class="no-val">—</span>'}</td>
+        <td class="col-notes">${notes || '<span class="no-val">—</span>'}</td>
+        <td>${statusBadge(status)}</td>
+        <td class="col-mono">${sanction || '<span class="no-val">—</span>'}</td>
+        <td>${trfCell}</td>
+      </tr>`;
+    };
+
+    const totalRow = (label, h, a, l, oh, o, n) => {
+      const fh = h>0 ? (Math.floor(h)+':'+(String(Math.round((h%1)*60)).padStart(2,'0'))) : '—';
+      return `<tr class="row-total">
+        <td class="col-date">${label}</td>
+        <td></td><td></td><td></td><td></td><td></td>
+        <td>${fh}</td>
+        <td>${a>0?a.toFixed(2):'—'}</td>
+        <td>${l>0?l.toFixed(2):'—'}</td>
+        <td>${n>0?n.toFixed(2):'—'}</td>
+        <td>${oh>0?oh.toFixed(2):'—'}</td>
+        <td>—</td>
+        <td>${o>0?o.toFixed(2):'—'}</td>
+        <td>—</td>
+        <td colspan="4"></td>
+      </tr>`;
+    };
+
+    const half1 = days.filter(d => d.getDate() <= 15);
+    const half2 = days.filter(d => d.getDate() > 15);
+
+    // Build rows (accumulators filled inside makeRow)
+    const rows1 = half1.map(makeRow).join('');
+    const rows2 = half2.map(makeRow).join('');
+
+    tbody.innerHTML =
+      rows1 +
+      totalRow('TOTAL (1–15)', h1H, h1A, h1L, h1Oh, h1O, h1N) +
+      '<tr class="divider"><td colspan="18"></td></tr>' +
+      rows2 +
+      totalRow('TOTAL (16–end)', h2H, h2A, h2L, h2Oh, h2O, h2N);
+
+    // Summary cards
+    const gH = h1H+h2H, gA = h1A+h2A, gL = h1L+h2L;
+    const gO = h1O+h2O, gOh = h1Oh+h2Oh, gN = h1N+h2N;
+    const fmtCard = (h) => h>0 ? Math.floor(h)+'h '+(Math.round((h%1)*60))+'m' : '0';
+    document.getElementById('sumHours').textContent    = fmtCard(gH);
+    document.getElementById('sumAbsent').textContent   = gA > 0 ? gA.toFixed(1) : '0';
+    document.getElementById('sumLate').textContent     = gL > 0 ? gL.toFixed(1) : '0';
+    document.getElementById('sumOTReg').textContent    = gO > 0 ? gO.toFixed(1) : '0';
+    document.getElementById('sumOTHol').textContent    = gOh> 0 ? gOh.toFixed(1): '0';
+    document.getElementById('sumNightDif').textContent = gN > 0 ? gN.toFixed(1) : '0';
+    document.getElementById('summaryCards').style.display = 'grid';
+  }
+
+  // ── Load from n8n ──
+  async function loadTimesheet() {
+    const employee = document.getElementById('employeeSelect').value;
+    const month    = document.getElementById('monthSelect').value;
+    const year     = document.getElementById('yearSelect').value;
+
+    if (!employee) {
+      document.getElementById('timesheetBody').innerHTML =
+        '<tr class="state-row"><td colspan="18">Please select an employee.</td></tr>';
+      document.getElementById('summaryCards').style.display = 'none';
+      return;
+    }
+
+    const btn = document.getElementById('refreshBtn');
+    btn.classList.add('loading');
+    document.getElementById('timesheetBody').innerHTML =
+      '<tr class="state-row"><td colspan="18"><span class="spinner"></span> Loading timesheet…</td></tr>';
+    document.getElementById('summaryCards').style.display = 'none';
+    document.getElementById('pageSubtitle').textContent =
+      employee + ' — ' + MONTHS[parseInt(month)-1] + ' ' + year;
+
+    try {
+      const url = N8N_TIMESHEET_URL +
+        '?employee=' + encodeURIComponent(employee) +
+        '&month=' + month + '&year=' + year;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      // n8n wraps each row in { json: {...} }
+      const rows = Array.isArray(data) ? data.map(i => i.json ?? i) : [];
+      renderTimesheet(rows, parseInt(year), parseInt(month));
+    } catch (err) {
+      renderTimesheet([], parseInt(year), parseInt(month));
+      console.warn('n8n fetch failed:', err.message, '— showing empty scaffold');
+    } finally {
+      btn.classList.remove('loading');
+    }
+  }
+
+  document.getElementById('employeeSelect').addEventListener('change', loadTimesheet);
+  document.getElementById('monthSelect').addEventListener('change', loadTimesheet);
+  document.getElementById('yearSelect').addEventListener('change', loadTimesheet);
+</script>
+
+</body>
+</html>
