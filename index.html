@@ -387,7 +387,7 @@
   // CONFIG
   // ══════════════════════════════════════════════════════
   const N8N_WEBHOOK_URL         = 'https://primary-production-a810.up.railway.app/webhook/get-trf-records';
-  const N8N_ADD_TIMESHEET_URL   = 'https://primary-production-a810.up.railway.app/webhook-test/add-to-timesheet';
+  const N8N_ADD_TIMESHEET_URL   = 'https://primary-production-a810.up.railway.app/webhook/add-to-timesheet';
 
   // ── State ──
   let allRecords   = [];
@@ -500,9 +500,9 @@
     tbody.innerHTML = records.map(r => {
       const uid     = r.uid || (r.employee_name + '_' + r.submitted_at);
       const checked = selectedUIDs.has(uid);
-      const docLink = r.supporting_doc
-        ? `<a class="trf-link" href="${r.supporting_doc}" target="_blank">View ${linkIcon()}</a>`
-        : `<span class="no-link">No Link</span>`;
+      const docLink = r.trf_link
+    ? `<a class="trf-link" href="${r.trf_link}" target="_blank">View ${linkIcon()}</a>`
+    : `<span class="no-link">No Link</span>`;
 
       return `
         <tr class="${checked ? 'row-checked' : ''}">
