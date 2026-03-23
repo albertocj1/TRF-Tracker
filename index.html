@@ -19,6 +19,7 @@
     --text-muted: #9ca3af;
     --border: #e5e7eb;
     --row-hover: #f9fafb;
+    --row-checked: #eff6ff;
     --status-pending-bg: #fff8e1;
     --status-pending-text: #b45309;
     --status-approved-bg: #e6f9f0;
@@ -30,53 +31,19 @@
     --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
   }
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text-primary);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
 
   /* ── TOP BAR ── */
-  .topbar {
-    background: var(--topbar-bg);
-    display: flex;
-    align-items: center;
-    padding: 0 28px;
-    height: 70px;
-    gap: 20px;
-    flex-shrink: 0;
-  }
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    flex-shrink: 0;
-  }
+  .topbar { background: var(--topbar-bg); display: flex; align-items: center; padding: 0 28px; height: 70px; gap: 20px; flex-shrink: 0; }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
   .logo-img { height: 40px; width: auto; object-fit: contain; }
   .logo-text { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: .5px; }
   .logo-text span { color: #64b5f6; }
-
   .search-wrap { flex: 1; max-width: 560px; margin: 0 24px; position: relative; }
-  .search-wrap input {
-    width: 100%;
-    background: rgba(255,255,255,.1);
-    border: 1.5px solid rgba(255,255,255,.15);
-    border-radius: 50px;
-    padding: 10px 20px 10px 44px;
-    font-family: inherit;
-    font-size: 14px;
-    color: #fff;
-    outline: none;
-    transition: border .2s;
-  }
+  .search-wrap input { width: 100%; background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.15); border-radius: 50px; padding: 10px 20px 10px 44px; font-family: inherit; font-size: 14px; color: #fff; outline: none; transition: border .2s; }
   .search-wrap input::placeholder { color: rgba(255,255,255,.45); }
   .search-wrap input:focus { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.14); }
   .search-wrap .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,.45); }
-
   .topbar-user { margin-left: auto; display: flex; align-items: center; gap: 12px; }
   .topbar-user-name { text-align: right; color: #fff; line-height: 1.3; }
   .topbar-user-name strong { display: block; font-size: 13.5px; font-weight: 600; }
@@ -98,6 +65,8 @@
 
   /* ── MAIN ── */
   .main { flex: 1; overflow-y: auto; padding: 28px 32px; }
+  .main::-webkit-scrollbar { width: 6px; }
+  .main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
 
   /* ── TOOLBAR ── */
   .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -108,13 +77,39 @@
   .filter-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
   .filter-select { appearance: none; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 32px 9px 13px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-primary); background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center; cursor: pointer; outline: none; transition: border .2s; }
   .filter-select:focus { border-color: var(--accent); }
-  .btn-add { margin-left: auto; display: flex; align-items: center; gap: 7px; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .2s, transform .1s; box-shadow: 0 2px 8px rgba(21,101,192,.3); }
+
+  /* ── DATE RANGE ── */
+  .date-range-wrap { display: flex; align-items: center; gap: 6px; background: #fff; border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 12px; transition: border .2s; }
+  .date-range-wrap:focus-within { border-color: var(--accent); }
+  .date-range-wrap input[type="date"] { border: none; outline: none; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-primary); background: transparent; cursor: pointer; width: 122px; }
+  .date-range-wrap input[type="date"]::-webkit-calendar-picker-indicator { opacity: .45; cursor: pointer; }
+  .date-range-sep { font-size: 12px; color: var(--text-muted); font-weight: 600; white-space: nowrap; padding: 0 2px; }
+  .btn-clear-date { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0 0 0 4px; display: inline-flex; align-items: center; font-size: 15px; line-height: 1; transition: color .15s; }
+  .btn-clear-date:hover { color: #dc2626; }
+
+  /* ── BUTTONS ── */
+  .btn-refresh { display: flex; align-items: center; gap: 6px; background: #fff; color: var(--text-secondary); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 14px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: border .2s, color .2s; }
+  .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-refresh.loading svg { animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .btn-add { margin-left: auto; display: flex; align-items: center; gap: 7px; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .2s, transform .1s; box-shadow: 0 2px 8px rgba(21,101,192,.3); position: relative; }
   .btn-add:hover { background: #0d47a1; transform: translateY(-1px); }
+  .btn-add:active { transform: translateY(0); }
+  .btn-add:disabled { background: #93c5fd; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* badge count on Add to Timesheets button */
+  .btn-add .count-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #fff; color: var(--accent);
+    font-size: 11px; font-weight: 800;
+    width: 18px; height: 18px; border-radius: 50%;
+    margin-left: 2px;
+  }
 
   /* ── LOADING / ERROR STATES ── */
   .state-row td { text-align: center; padding: 40px 18px !important; color: var(--text-muted); font-size: 13.5px; }
   .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
-  @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ── TABLE ── */
   .table-card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden; }
@@ -122,18 +117,19 @@
   .table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
   .table-scroll::-webkit-scrollbar-track { background: transparent; }
   .table-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-  table { width: 100%; border-collapse: collapse; min-width: 900px; }
-  thead th { position: sticky; top: 0; z-index: 1; }
-  thead th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); padding: 13px 18px; background: #fafbfc; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; min-width: 960px; }
+  thead th { position: sticky; top: 0; z-index: 1; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); padding: 13px 18px; background: #fafbfc; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  thead th.th-check { width: 44px; padding: 13px 14px; text-align: center; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--row-hover); }
+  tbody tr.row-checked { background: var(--row-checked) !important; }
   tbody td { padding: 15px 18px; font-size: 13.5px; color: var(--text-primary); vertical-align: top; }
+  tbody td.td-check { padding: 15px 14px; text-align: center; vertical-align: middle; }
 
   .col-name   { font-weight: 600; min-width: 150px; }
   .col-date   { font-family: 'DM Mono', monospace; font-size: 12.5px; color: var(--text-secondary); min-width: 120px; }
-  .col-from,
-  .col-to     { font-family: 'DM Mono', monospace; font-size: 12.5px; min-width: 100px; }
+  .col-from, .col-to { font-family: 'DM Mono', monospace; font-size: 12.5px; min-width: 100px; }
   .col-reason { font-size: 13px; color: var(--text-secondary); max-width: 300px; line-height: 1.5; }
   .col-link, .col-approval, .col-status { white-space: nowrap; }
 
@@ -154,34 +150,82 @@
   .approval-text.level-hr         { color: #1565c0; }
   .approval-text.level-master     { color: #b45309; }
 
-  /* ── REFRESH BTN ── */
-  .btn-refresh { display: flex; align-items: center; gap: 6px; background: #fff; color: var(--text-secondary); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 14px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: border .2s, color .2s; }
-  .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-refresh svg { transition: transform .4s; }
-  .btn-refresh.loading svg { animation: spin .7s linear infinite; }
+  /* ── CUSTOM CHECKBOX ── */
+  .custom-cb { position: relative; width: 18px; height: 18px; flex-shrink: 0; display: inline-block; }
+  .custom-cb input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .custom-cb .cb-box {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: border .15s, background .15s;
+  }
+  .custom-cb input:checked ~ .cb-box { background: var(--accent); border-color: var(--accent); }
+  .custom-cb .cb-box svg { display: none; }
+  .custom-cb input:checked ~ .cb-box svg { display: block; }
 
-  /* ── SCROLLBAR ── */
-  .main::-webkit-scrollbar { width: 6px; }
-  .main::-webkit-scrollbar-track { background: transparent; }
-  .main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+  /* select-all checkbox in header */
+  .th-check .custom-cb .cb-box { border-color: #cbd5e1; }
+
+  /* ── TOAST NOTIFICATION ── */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #1a1a2e; color: #fff;
+    padding: 12px 22px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    opacity: 0; pointer-events: none;
+    transition: transform .3s ease, opacity .3s ease;
+    z-index: 999; white-space: nowrap;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.success { background: #15803d; }
+  .toast.error   { background: #dc2626; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; opacity: 0; pointer-events: none;
+    transition: opacity .2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: #fff; border-radius: 14px;
+    padding: 28px 32px; width: 480px; max-width: 95vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    transform: translateY(20px);
+    transition: transform .2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .modal-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+  .modal-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; max-height: 260px; overflow-y: auto; }
+  .modal-list li { background: var(--bg); border-radius: 8px; padding: 10px 14px; font-size: 13px; }
+  .modal-list li strong { display: block; font-weight: 600; color: var(--text-primary); }
+  .modal-list li span { color: var(--text-muted); font-size: 12px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-modal-cancel { background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 18px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-secondary); transition: border .15s; }
+  .btn-modal-cancel:hover { border-color: var(--text-muted); }
+  .btn-modal-confirm { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 9px 20px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s; box-shadow: 0 2px 8px rgba(21,101,192,.3); }
+  .btn-modal-confirm:hover { background: #0d47a1; }
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════
-     TOP BAR
-══════════════════════════════════ -->
+<!-- TOP BAR -->
 <header class="topbar">
   <a class="logo" href="#">
     <img src="logo.png" alt="CrowdSource Logo" class="logo-img">
     <span class="logo-text"><span>CROWD</span>SOURCE</span>
   </a>
-
   <div class="search-wrap">
     <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input type="text" placeholder="Search here">
   </div>
-
   <div class="topbar-user">
     <div class="topbar-user-name">
       <strong>Lebron James</strong>
@@ -193,9 +237,7 @@
   </div>
 </header>
 
-<!-- ══════════════════════════════════
-     LAYOUT
-══════════════════════════════════ -->
+<!-- LAYOUT -->
 <div class="layout">
 
   <!-- SIDEBAR -->
@@ -232,9 +274,7 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       Exit Letters
     </a>
-
     <div class="nav-divider"></div>
-
     <div class="nav-bottom">
       <a class="nav-item" href="#">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -279,49 +319,79 @@
         Refresh
       </button>
 
-      <button class="btn-add">
+      <button class="btn-add" id="addBtn" onclick="openModal()" disabled>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add to Timesheets
+        <span class="count-badge" id="countBadge" style="display:none">0</span>
       </button>
     </div>
 
     <!-- TABLE -->
     <div class="table-card">
       <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Submission Date</th>
-            <th>From</th>
-            <th>To</th>
-            <th>Reason</th>
-            <th>TRF Link</th>
-            <th>Approval Level</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <!-- Rows injected by JS -->
-          <tr class="state-row">
-            <td colspan="8"><span class="spinner"></span> Loading records…</td>
-          </tr>
-        </tbody>
-      </table>
+        <table>
+          <thead>
+            <tr>
+              <th class="th-check">
+                <!-- Select All checkbox -->
+                <label class="custom-cb" title="Select all">
+                  <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
+                  <span class="cb-box">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                </label>
+              </th>
+              <th>Name</th>
+              <th>Submission Date</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Reason</th>
+              <th>TRF Link</th>
+              <th>Approval Level</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr class="state-row">
+              <td colspan="9"><span class="spinner"></span> Loading records…</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
   </main>
 </div>
 
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Add to Timesheets</div>
+    <div class="modal-subtitle" id="modalSubtitle">You are about to add the following records:</div>
+    <ul class="modal-list" id="modalList"></ul>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-confirm" onclick="confirmAddToTimesheets()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px"><polyline points="20 6 9 17 4 12"/></svg>
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
 <script>
   // ══════════════════════════════════════════════════════
-  // CONFIG — paste your n8n webhook URL here once it's live
+  // CONFIG
   // ══════════════════════════════════════════════════════
-  const N8N_WEBHOOK_URL = 'https://primary-production-a810.up.railway.app/webhook/get-trf-records';
+  const N8N_WEBHOOK_URL         = 'https://primary-production-a810.up.railway.app/webhook/get-trf-records';
+  const N8N_ADD_TIMESHEET_URL   = 'https://primary-production-a810.up.railway.app/webhook-test/add-to-timesheet';
 
   // ── State ──
-  let allRecords = [];
+  let allRecords   = [];
+  let selectedUIDs = new Set(); // tracks checked UIDs across filter changes
 
   // ── Helpers ──
   function formatDate(iso) {
@@ -350,22 +420,102 @@
     return `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
   }
 
+  // ── Update Add button state ──
+  function updateAddBtn() {
+    const btn   = document.getElementById('addBtn');
+    const badge = document.getElementById('countBadge');
+    const count = selectedUIDs.size;
+    btn.disabled = count === 0;
+    if (count > 0) {
+      badge.textContent = count;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // ── Update select-all state ──
+  function updateSelectAll() {
+    const checkboxes = document.querySelectorAll('.row-cb');
+    const checked = document.querySelectorAll('.row-cb:checked');
+    const selectAll = document.getElementById('selectAll');
+    if (checkboxes.length === 0) {
+      selectAll.checked = false;
+      selectAll.indeterminate = false;
+    } else if (checked.length === 0) {
+      selectAll.checked = false;
+      selectAll.indeterminate = false;
+    } else if (checked.length === checkboxes.length) {
+      selectAll.checked = true;
+      selectAll.indeterminate = false;
+    } else {
+      selectAll.checked = false;
+      selectAll.indeterminate = true;
+    }
+  }
+
+  // ── Handle individual checkbox change ──
+  function onRowCheck(cb, uid) {
+    const row = cb.closest('tr');
+    if (cb.checked) {
+      selectedUIDs.add(uid);
+      row.classList.add('row-checked');
+    } else {
+      selectedUIDs.delete(uid);
+      row.classList.remove('row-checked');
+    }
+    updateSelectAll();
+    updateAddBtn();
+  }
+
+  // ── Toggle all visible rows ──
+  function toggleSelectAll(masterCb) {
+    const checkboxes = document.querySelectorAll('.row-cb');
+    checkboxes.forEach(cb => {
+      cb.checked = masterCb.checked;
+      const uid = cb.dataset.uid;
+      const row = cb.closest('tr');
+      if (masterCb.checked) {
+        selectedUIDs.add(uid);
+        row.classList.add('row-checked');
+      } else {
+        selectedUIDs.delete(uid);
+        row.classList.remove('row-checked');
+      }
+    });
+    updateAddBtn();
+  }
+
   // ── Render rows ──
   function renderRows(records) {
     const tbody = document.getElementById('tableBody');
 
     if (!records.length) {
-      tbody.innerHTML = `<tr class="state-row"><td colspan="8">No records found.</td></tr>`;
+      tbody.innerHTML = `<tr class="state-row"><td colspan="9">No records found.</td></tr>`;
+      document.getElementById('selectAll').checked = false;
+      document.getElementById('selectAll').indeterminate = false;
       return;
     }
 
     tbody.innerHTML = records.map(r => {
+      const uid     = r.uid || (r.employee_name + '_' + r.submitted_at);
+      const checked = selectedUIDs.has(uid);
       const docLink = r.supporting_doc
         ? `<a class="trf-link" href="${r.supporting_doc}" target="_blank">View ${linkIcon()}</a>`
         : `<span class="no-link">No Link</span>`;
 
       return `
-        <tr>
+        <tr class="${checked ? 'row-checked' : ''}">
+          <td class="td-check">
+            <label class="custom-cb">
+              <input type="checkbox" class="row-cb" data-uid="${uid}"
+                ${checked ? 'checked' : ''}
+                onchange="onRowCheck(this, '${uid}')">
+              <span class="cb-box">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            </label>
+          </td>
           <td class="col-name">${r.employee_name || '—'}</td>
           <td class="col-date">${formatDate(r.submitted_at)}</td>
           <td class="col-from">${formatDate(r.start_time)}</td>
@@ -376,42 +526,29 @@
           <td class="col-status">${statusBadge(r.status)}</td>
         </tr>`;
     }).join('');
+
+    updateSelectAll();
   }
 
   // ── Filter logic ──
   function applyFilters() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    const status = document.getElementById('filterStatus').value;
+    const search   = document.getElementById('searchInput').value.toLowerCase();
+    const status   = document.getElementById('filterStatus').value;
     const dateFrom = document.getElementById('dateFrom').value;
     const dateTo   = document.getElementById('dateTo').value;
 
-    // Show/hide clear button
     const clearBtn = document.getElementById('clearDate');
     clearBtn.style.display = (dateFrom || dateTo) ? 'inline-flex' : 'none';
 
-    let filtered = allRecords.filter(r => {
-      // name search
+    const filtered = allRecords.filter(r => {
       if (search && !(r.employee_name || '').toLowerCase().includes(search)) return false;
-
-      // status filter
       if (status && (r.status || '').toLowerCase() !== status.toLowerCase()) return false;
-
-      // date range filter (based on submitted_at)
       if (dateFrom || dateTo) {
         const submitted = new Date(r.submitted_at);
-        submitted.setHours(0, 0, 0, 0);
-        if (dateFrom) {
-          const from = new Date(dateFrom);
-          from.setHours(0, 0, 0, 0);
-          if (submitted < from) return false;
-        }
-        if (dateTo) {
-          const to = new Date(dateTo);
-          to.setHours(23, 59, 59, 999);
-          if (submitted > to) return false;
-        }
+        submitted.setHours(0,0,0,0);
+        if (dateFrom) { const f = new Date(dateFrom); f.setHours(0,0,0,0); if (submitted < f) return false; }
+        if (dateTo)   { const t = new Date(dateTo);   t.setHours(23,59,59,999); if (submitted > t) return false; }
       }
-
       return true;
     });
 
@@ -420,28 +557,97 @@
 
   // ── Fetch from n8n ──
   async function loadData() {
-    const btn = document.getElementById('refreshBtn');
+    const btn   = document.getElementById('refreshBtn');
     const tbody = document.getElementById('tableBody');
-
     btn.classList.add('loading');
-    tbody.innerHTML = `<tr class="state-row"><td colspan="8"><span class="spinner"></span> Loading records…</td></tr>`;
+    tbody.innerHTML = `<tr class="state-row"><td colspan="9"><span class="spinner"></span> Loading records…</td></tr>`;
 
     try {
       const res = await fetch(N8N_WEBHOOK_URL);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-
-      // n8n returns array of objects — handle both wrapped and unwrapped
-      allRecords = Array.isArray(data)
-        ? data.map(item => item.json ?? item)
-        : [];
-
+      allRecords = Array.isArray(data) ? data.map(i => i.json ?? i) : [];
       applyFilters();
     } catch (err) {
-      tbody.innerHTML = `<tr class="state-row"><td colspan="8">⚠️ Could not load data. Check your n8n webhook URL.<br><small style="color:#9ca3af">${err.message}</small></td></tr>`;
+      tbody.innerHTML = `<tr class="state-row"><td colspan="9">⚠️ Could not load data. Check your n8n webhook URL.<br><small style="color:#9ca3af">${err.message}</small></td></tr>`;
     } finally {
       btn.classList.remove('loading');
     }
+  }
+
+  // ── Modal ──
+  function openModal() {
+    if (selectedUIDs.size === 0) return;
+
+    const selected = allRecords.filter(r => {
+      const uid = r.uid || (r.employee_name + '_' + r.submitted_at);
+      return selectedUIDs.has(uid);
+    });
+
+    document.getElementById('modalSubtitle').textContent =
+      `You are about to add ${selected.length} record${selected.length > 1 ? 's' : ''} to the timesheet:`;
+
+    document.getElementById('modalList').innerHTML = selected.map(r => {
+      const from = r.start_time ? new Date(r.start_time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}) : '—';
+      const to   = r.end_time   ? new Date(r.end_time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})   : '—';
+      return `<li>
+        <strong>${r.employee_name || '—'}</strong>
+        <span>${from} → ${to} &nbsp;·&nbsp; ${r.reason || 'No reason'}</span>
+      </li>`;
+    }).join('');
+
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  // ── Confirm Add to Timesheets ──
+  async function confirmAddToTimesheets() {
+    closeModal();
+
+    const selected = allRecords.filter(r => {
+      const uid = r.uid || (r.employee_name + '_' + r.submitted_at);
+      return selectedUIDs.has(uid);
+    });
+
+    showToast(`Adding ${selected.length} record${selected.length > 1 ? 's' : ''} to timesheet…`);
+
+    try {
+      const res = await fetch(N8N_ADD_TIMESHEET_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: selected })
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // Clear selections after success
+      selectedUIDs.clear();
+      updateAddBtn();
+      document.querySelectorAll('.row-cb:checked').forEach(cb => {
+        cb.checked = false;
+        cb.closest('tr').classList.remove('row-checked');
+      });
+      document.getElementById('selectAll').checked = false;
+
+      showToast(`✓ ${selected.length} record${selected.length > 1 ? 's' : ''} added to timesheet!`, 'success');
+
+    } catch (err) {
+      showToast('⚠️ Failed to add records. Try again.', 'error');
+    }
+  }
+
+  // ── Toast ──
+  let toastTimer;
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (type ? ' ' + type : '');
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
   }
 
   // ── Event listeners ──
@@ -454,6 +660,9 @@
     document.getElementById('dateTo').value = '';
     document.getElementById('clearDate').style.display = 'none';
     applyFilters();
+  });
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
   });
 
   // ── Load on page open ──
