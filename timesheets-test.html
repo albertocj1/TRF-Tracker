@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrowdSource – Timesheets</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f5f7;
+    --sidebar-bg: #ffffff;
+    --topbar-bg: #1a1a2e;
+    --accent: #1565c0;
+    --accent-light: #e8f0fe;
+    --text-primary: #1a1a2e;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --border: #e5e7eb;
+    --row-hover: #f9fafb;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
+
+    --weekend-bg: #f8faff;
+    --weekend-text: #9ca3af;
+    --absent-bg: #fef2f2;
+    --late-bg: #fff8e1;
+    --total-bg: #f0f4ff;
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── TOPBAR ── */
+  .topbar { background: var(--topbar-bg); display: flex; align-items: center; padding: 0 28px; height: 70px; gap: 20px; flex-shrink: 0; }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+  .logo-img { height: 40px; width: auto; object-fit: contain; }
+  .logo-text { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: .5px; }
+  .logo-text span { color: #64b5f6; }
+  .topbar-user { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .topbar-user-name { text-align: right; color: #fff; line-height: 1.3; }
+  .topbar-user-name strong { display: block; font-size: 13.5px; font-weight: 600; }
+  .topbar-user-name span { font-size: 12px; color: rgba(255,255,255,.55); }
+  .avatar { width: 40px; height: 40px; background: rgba(255,255,255,.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.8); }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 210px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 10px 20px; font-size: 13.5px; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: background .15s, color .15s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--accent-light); color: var(--accent); }
+  .nav-item.active { color: var(--accent); background: var(--accent-light); font-weight: 600; }
+  .nav-item svg { flex-shrink: 0; opacity: .7; }
+  .nav-item.active svg { opacity: 1; }
+  .nav-divider { height: 1px; background: var(--border); margin: 12px 16px; }
+  .nav-bottom { margin-top: auto; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; }
+  .main::-webkit-scrollbar { width: 6px; }
+  .main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+  /* ── PAGE HEADER ── */
+  .page-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .page-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── CONTROLS ── */
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .employee-select {
+    appearance: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 36px 9px 14px;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+    cursor: pointer;
+    outline: none;
+    min-width: 220px;
+    transition: border .2s;
+  }
+  .employee-select:focus { border-color: var(--accent); }
+
+  .month-select {
+    appearance: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 36px 9px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+    cursor: pointer;
+    outline: none;
+    transition: border .2s;
+  }
+  .month-select:focus { border-color: var(--accent); }
+
+  .btn-refresh { display: flex; align-items: center; gap: 6px; background: #fff; color: var(--text-secondary); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 14px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: border .2s, color .2s; }
+  .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-refresh.loading svg { animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── APPROVAL BANNER ── */
+  .approval-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    box-shadow: var(--shadow-sm);
+    flex-wrap: wrap;
+  }
+  .approval-banner-info { display: flex; align-items: center; gap: 12px; }
+  .approval-status-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    background: #d1d5db;
+  }
+  .approval-status-dot.submitted { background: #f59e0b; }
+  .approval-status-dot.approved  { background: #15803d; }
+  .approval-banner-text strong { font-size: 13.5px; font-weight: 600; color: var(--text-primary); display: block; }
+  .approval-banner-text span { font-size: 12px; color: var(--text-muted); }
+
+  .btn-approve {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #15803d; color: #fff; border: none;
+    border-radius: 8px; padding: 9px 16px;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background .2s, transform .1s;
+    white-space: nowrap;
+  }
+  .btn-approve:hover:not(:disabled) { background: #166534; }
+  .btn-approve:active { transform: scale(0.98); }
+  .btn-approve:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-approve.already-approved { background: #6b7280; cursor: default; }
+
+  /* ── SUMMARY CARDS ── */
+  .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow-sm); }
+  .card-label { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .card-value { font-size: 22px; font-weight: 700; color: var(--text-primary); font-family: 'DM Mono', monospace; }
+  .card-value.accent  { color: var(--accent); }
+  .card-value.danger  { color: #dc2626; }
+  .card-value.warning { color: #b45309; }
+  .card-value.success { color: #15803d; }
+
+  /* ── TABLE CARD ── */
+  .table-card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 360px); }
+  .table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+  .table-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+  table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+  thead th {
+    position: sticky; top: 0; z-index: 2;
+    text-align: center;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--text-muted); padding: 11px 10px;
+    background: #fafbfc; border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th.col-date { text-align: left; padding-left: 16px; }
+  thead th.col-notes { text-align: left; }
+
+  thead tr.group-row th {
+    font-size: 10px; font-weight: 800; letter-spacing: .1em;
+    padding: 6px 10px; border-bottom: none;
+  }
+  thead tr.group-row th.g-time   { background: #eff6ff; color: #1d4ed8; }
+  thead tr.group-row th.g-pay    { background: #f0fdf4; color: #15803d; }
+  thead tr.group-row th.g-ot     { background: #fefce8; color: #92400e; }
+  thead tr.group-row th.g-trf    { background: #faf5ff; color: #6b21a8; }
+  thead tr.group-row th.g-blank  { background: #fafbfc; }
+
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--row-hover); }
+  tbody td { padding: 10px 10px; font-size: 12.5px; color: var(--text-primary); text-align: center; vertical-align: middle; }
+  tbody td.col-date { text-align: left; padding-left: 16px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+  tbody td.col-day  { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+  tbody td.col-mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+  tbody td.col-notes { text-align: left; font-size: 12px; color: var(--text-secondary); max-width: 160px; }
+
+  tr.row-weekend td { color: var(--weekend-text) !important; background: var(--weekend-bg); }
+  tr.row-weekend td.col-date { color: #a5b4fc !important; }
+  tr.row-absent td { background: var(--absent-bg); }
+  tr.row-absent td.col-absent { color: #dc2626; font-weight: 700; }
+  tr.row-late td { background: var(--late-bg); }
+  tr.row-late td.col-late { color: #b45309; font-weight: 700; }
+  tr.row-total { background: var(--total-bg) !important; border-top: 2px solid #c7d7f9 !important; }
+  tr.row-total td { font-weight: 700; font-size: 12px; color: var(--accent); font-family: 'DM Mono', monospace; }
+  tr.row-total td.col-date { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 3px 9px; border-radius: 20px; }
+  .badge-pending  { background: #fff8e1; color: #b45309; }
+  .badge-approved { background: #e6f9f0; color: #15803d; }
+  .badge-rejected { background: #fef2f2; color: #dc2626; }
+  .trf-link { color: var(--accent); font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
+  .trf-link:hover { text-decoration: underline; }
+  .no-val { color: #d1d5db; font-size: 11px; }
+
+  .state-row td { text-align: center; padding: 48px !important; color: var(--text-muted); font-size: 13.5px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
+
+  tr.divider td { padding: 0 !important; height: 6px; background: #f4f5f7; border-bottom: 1px solid var(--border); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.45); z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    padding: 32px 28px; max-width: 440px; width: 90%;
+    animation: modalIn .2s ease;
+  }
+  @keyframes modalIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #dcfce7; display: flex; align-items: center;
+    justify-content: center; margin-bottom: 16px;
+  }
+  .modal-title { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+  .modal-body { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 6px; }
+  .modal-warning {
+    font-size: 12.5px; color: #b45309;
+    background: #fff8e1; border-radius: 8px;
+    padding: 10px 14px; margin: 14px 0;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .modal-warning svg { flex-shrink: 0; margin-top: 1px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .btn-cancel {
+    padding: 9px 18px; border: 1.5px solid var(--border);
+    border-radius: 8px; background: #fff; font-family: inherit;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    color: var(--text-secondary); transition: border .2s;
+  }
+  .btn-cancel:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-confirm-approve {
+    padding: 9px 18px; background: #15803d; color: #fff;
+    border: none; border-radius: 8px; font-family: inherit;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-confirm-approve:hover { background: #166534; }
+  .btn-confirm-approve:disabled { opacity: 0.6; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="#">
+    <img src="logo.png" alt="CrowdSource Logo" class="logo-img">
+    <span class="logo-text"><span>CROWD</span>SOURCE</span>
+  </a>
+  <div class="topbar-user">
+    <div class="topbar-user-name">
+      <strong>Lebron James</strong>
+      <span>Human Resources</span>
+    </div>
+    <div class="avatar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <a class="nav-item" href="index.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      TRF Dashboard
+    </a>
+    
+    <a class="nav-item" href="hr-inbox.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      HR Inbox
+    </a>
+
+    <a class="nav-item active" href="timesheet.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Timesheets
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      HR Closing Letters
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      HR Database
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+      Onboarding
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Background Investigation
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      SIL Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Exit Letters
+    </a>
+    <div class="nav-divider"></div>
+    <div class="nav-bottom">
+      <a class="nav-item" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Help
+      </a>
+      <a class="nav-item" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </a>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">Timesheets</div>
+        <div class="page-subtitle" id="pageSubtitle">Select an employee to view their timesheet</div>
+      </div>
+      <div class="controls">
+        <select class="employee-select" id="employeeSelect">
+          <option value="">— Select Employee —</option>
+        </select>
+        <select class="month-select" id="cutoffSelect">
+          <option value="Q1">Cutoff 1</option>
+          <option value="Q2">Cutoff 2</option>
+        </select>
+        <select class="month-select" id="monthSelect">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3" selected>March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <select class="month-select" id="yearSelect"></select>
+        <button class="btn-refresh" id="refreshBtn" onclick="loadTimesheet()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <div class="approval-banner" id="approvalBanner">
+      <div class="approval-banner-info">
+        <div class="approval-status-dot" id="approvalDot"></div>
+        <div class="approval-banner-text">
+          <strong id="approvalStatusLabel">Loading cutoff status…</strong>
+          <span id="approvalStatusSub">Checking approval state for this cutoff.</span>
+        </div>
+      </div>
+      <button class="btn-approve" id="approveCutoffBtn" onclick="openApproveModal()" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Approve Entire Cutoff
+      </button>
+    </div>
+
+    <div class="summary-cards" id="summaryCards" style="display:none">
+      <div class="card">
+        <div class="card-label">Total Hours</div>
+        <div class="card-value accent" id="sumHours">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Absent Days</div>
+        <div class="card-value danger" id="sumAbsent">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Late / Undertime</div>
+        <div class="card-value warning" id="sumLate">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">OT Regular</div>
+        <div class="card-value success" id="sumOTReg">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">OT Holiday</div>
+        <div class="card-value success" id="sumOTHol">—</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Night Diff</div>
+        <div class="card-value" id="sumNightDif">—</div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr class="group-row">
+              <th class="g-blank" colspan="2"></th>
+              <th class="g-time" colspan="4">Time</th>
+              <th class="g-pay" colspan="3">Attendance</th>
+              <th class="g-ot" colspan="5">Overtime</th>
+              <th class="g-trf" colspan="4">TRF</th>
+            </tr>
+            <tr>
+              <th class="col-date" style="text-align:left">Date</th>
+              <th>Day</th>
+              <th>Time In</th>
+              <th>Break In</th>
+              <th>Break Out</th>
+              <th>Time Out</th>
+              <th>Hours</th>
+              <th>Absent</th>
+              <th>Late / UT</th>
+              <th>Night Dif</th>
+              <th>OT Hol</th>
+              <th>OT S.Hol</th>
+              <th>OT Reg</th>
+              <th>OT Rest</th>
+              <th class="col-notes">Notes</th>
+              <th>Status</th>
+              <th>Sanction</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody id="timesheetBody">
+            <tr class="state-row">
+              <td colspan="18">Select an employee above to load their timesheet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="modal-overlay" id="approveModal">
+  <div class="modal">
+    <div class="modal-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <div class="modal-title">Approve Entire Cutoff?</div>
+    <div class="modal-body" id="modalBody">
+      You are about to approve all timesheets for this cutoff period.
+    </div>
+    <div class="modal-warning">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      This will lock the timesheet data and forward it to Accounting. This action cannot be undone.
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeApproveModal()">Cancel</button>
+      <button class="btn-confirm-approve" id="confirmApproveBtn" onclick="confirmApproval()">
+        Yes, Approve Cutoff
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─────────────────────────────────────────────
+  // CONFIGURATION — update URLs once webhooks are built
+  // ─────────────────────────────────────────────
+
+  // Your existing getEmployeeData webhook (Document 7)
+  const N8N_TIMESHEET_URL = 'https://primary-production-a810.up.railway.app/webhook/get-employee';
+
+  // Your new HR approve webhook
+  const HR_APPROVE_URL = 'https://primary-production-a810.up.railway.app/webhook/hr-approve-timesheet';
+
+  // Your new HR queue/status webhook
+  const HR_QUEUE_URL = 'https://primary-production-a810.up.railway.app/webhook/hr-get-queue';
+
+  // Company constant — matches your n8n Company Constants node
+  const COMPANY = 'CISI';
+
+  // ─────────────────────────────────────────────
+  // EMPLOYEE LIST — id matches your Postgres DB,
+  // name matches your Google Sheets tab names
+  // ─────────────────────────────────────────────
+  const EMPLOYEES = [
+    { id: 18,     name: 'Suarez, Kimberlyn Vianca' },
+    { id: 20,     name: 'Panganiban, Danila Mae' },
+    { id: 17,     name: 'Beles, Rhea Belle' },
+    { id: 33,     name: 'Morales, Laiza' },
+    { id: 34,     name: 'Rodil, Marco Elijah' },
+    { id: 29,     name: 'Tayao, Christopher Andrei' },
+    { id: 28,     name: 'Escaño, Ruel' },
+    { id: 30,     name: 'Tenefrancia, Ayra Lexi' },
+    { id: 19,     name: 'Hilario, Yvon Marjori' },
+    { id: 26,     name: 'Vinarao, Anthony' },
+    { id: 25,     name: 'Cayetano, Cheennee' },
+    { id: 24,     name: 'Torregoza, Don Howard' },
+    { id: 21,     name: 'Tacaca, Adrian Raye' },
+    { id: 27,     name: 'Alcantara, Ma. Cristina' },
+    { id: 23,     name: 'Pedroche, Maria Beatrice' },
+    { id: 974951, name: 'Alberto, Christian Joshua' },
+  ];
+
+  const DAYS      = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS    = ['January','February','March','April','May','June',
+                     'July','August','September','October','November','December'];
+  const MON_SHORT = ['Jan','Feb','Mar','Apr','May','Jun',
+                     'Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Cutoff approval state — loaded from HR_QUEUE_URL
+  let cutoffState = {
+    endUserSubmitted: false,
+    hrApproved: false,
+    timesheetApproved: false
+  };
+
+  // ─────────────────────────────────────────────
+  // INIT DROPDOWNS
+  // ─────────────────────────────────────────────
+  const empSel = document.getElementById('employeeSelect');
+  EMPLOYEES.sort((a, b) => a.name.localeCompare(b.name)).forEach(emp => {
+    const opt = document.createElement('option');
+    opt.value = emp.id;
+    opt.textContent = emp.name;
+    empSel.appendChild(opt);
+  });
+
+  const yearSel = document.getElementById('yearSelect');
+  const curYear = new Date().getFullYear();
+  for (let y = curYear; y >= curYear - 3; y--) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    if (y === curYear) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+
+  // ─────────────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────────────
+  function fmtHours(str) {
+    if (!str || str === '0:00:00' || str === '00:00:00') return '<span class="no-val">—</span>';
+    if (str.startsWith('-')) return '<span style="color:#dc2626">'+str+'</span>';
+    const parts = str.split(':');
+    return parts[0] + ':' + (parts[1] || '00');
+  }
+
+  function fmtNum(v) {
+    if (v === null || v === undefined || v === '' || parseFloat(v) === 0) return '<span class="no-val">—</span>';
+    return parseFloat(v).toFixed(2);
+  }
+
+  function fmtTime(v) {
+    return v ? v : '<span class="no-val">—</span>';
+  }
+
+  function statusBadge(s) {
+    if (!s) return '<span class="no-val">—</span>';
+    const sl = s.toLowerCase();
+    if (sl === 'approved' || sl === 'excused') return '<span class="badge badge-approved">'+s+'</span>';
+    if (sl === 'rejected' || sl === 'unexcused') return '<span class="badge badge-rejected">'+s+'</span>';
+    return '<span class="badge badge-pending">'+s+'</span>';
+  }
+
+  function timeStrToHours(str) {
+    if (!str || str === '0:00:00' || str === '00:00:00') return 0;
+    const parts = str.split(':');
+    if (parts.length < 2) return 0;
+    const h = parseInt(parts[0]) || 0;
+    const m = parseInt(parts[1]) || 0;
+    return h + m / 60;
+  }
+
+  function getDaysInMonth(year, month) {
+    const days = [];
+    const count = new Date(year, month, 0).getDate();
+    for (let d = 1; d <= count; d++) days.push(new Date(year, month - 1, d));
+    return days;
+  }
+
+  function getSelectedMonthName() {
+    const monthNum = parseInt(document.getElementById('monthSelect').value);
+    return MONTHS[monthNum - 1];
+  }
+
+  // ─────────────────────────────────────────────
+  // RENDER TIMESHEET TABLE
+  // Fields match what your webhook (Document 7)
+  // actually returns from the timesheet parser
+  // ─────────────────────────────────────────────
+  function renderTimesheet(rawRows, year, month) {
+    const tbody = document.getElementById('timesheetBody');
+    const days  = getDaysInMonth(year, month);
+
+    // Map rows by "Mar 1" date label
+    const byLabel = {};
+    rawRows.forEach(r => {
+      const raw = r['date'] || r['DATE'] || '';
+      if (!raw || raw === 'DATE' || raw.toString().toUpperCase().includes('TOTAL')) return;
+      byLabel[raw.toString().trim()] = r;
+    });
+
+    let h1H=0, h1A=0, h1L=0, h1O=0, h1Oh=0, h1N=0;
+    let h2H=0, h2A=0, h2L=0, h2O=0, h2Oh=0, h2N=0;
+
+    const makeRow = (date) => {
+      const mon   = MON_SHORT[date.getMonth()];
+      const label = mon + ' ' + date.getDate();
+      const r     = byLabel[label] || {};
+      const day   = DAYS[date.getDay()];
+      const weekend = date.getDay() === 0 || date.getDay() === 6;
+
+      // ── Field mapping matching your webhook's camelCase output ──
+      const timeIn   = r['timeIn']            || '';
+      const breakIn  = r['breakIn']           || '';
+      const breakOut = r['breakOut']          || '';
+      const timeOut  = r['timeOut']           || '';
+      const absent   = parseFloat(r['absent']            || 0);
+      const late     = parseFloat(r['lateUndertime']     || 0);
+      const nightDif = parseFloat(r['nightDifferential'] || 0);
+      const otHol    = parseFloat(r['otHoliday']         || 0);
+      const otSHol   = parseFloat(r['otSpecialHoliday']  || 0);
+      const otReg    = parseFloat(r['otRegular']         || 0);
+      const otRest   = parseFloat(r['otRest']            || 0);
+      const notes    = r['trf_note']   || '';
+      const status   = r['trf_status'] || '';
+      const sanction = r['sanction']   || '';
+
+      // Compute working hours from timeIn/timeOut
+      // FIXED MATH LOGIC HERE to handle missing/negative/swapped break times
+      const hoursNum = (() => {
+        if (!timeIn || !timeOut || timeIn === '0:00:00' || timeOut === '0:00:00' || timeIn === '-' || timeOut === '-') return 0;
+        
+        const toSec = s => {
+          const p = String(s).split(':');
+          return (parseInt(p[0])||0)*3600 + (parseInt(p[1])||0)*60 + (parseInt(p[2])||0);
+        };
+        
+        const tInSec = toSec(timeIn);
+        const tOutSec = toSec(timeOut);
+        
+        // Safety: If clocked out earlier than clocked in, it's missing data or cross-day (simplified safety to 0)
+        if (tOutSec <= tInSec) return 0;
+        
+        const totalSec = tOutSec - tInSec;
+        
+        // FIX: Math.abs handles swapped break times (e.g. Break In 13:00, Break Out 12:00)
+        const breakSec = (breakIn && breakOut && breakIn !== '-' && breakOut !== '-') 
+          ? Math.abs(toSec(breakOut) - toSec(breakIn)) 
+          : 0;
+          
+        return Math.max(0, (totalSec - breakSec)) / 3600;
+      })();
+
+      const hoursDisplay = hoursNum > 0
+        ? Math.floor(hoursNum) + ':' + String(Math.round((hoursNum % 1) * 60)).padStart(2, '0')
+        : null;
+
+      if (date.getDate() <= 15) {
+        h1H += hoursNum; h1A += absent; h1L += late;
+        h1O += otReg; h1Oh += otHol; h1N += nightDif;
+      } else {
+        h2H += hoursNum; h2A += absent; h2L += late;
+        h2O += otReg; h2Oh += otHol; h2N += nightDif;
+      }
+
+      let rowClass = '';
+      if (weekend)       rowClass = 'row-weekend';
+      else if (absent>0) rowClass = 'row-absent';
+      else if (late>0)   rowClass = 'row-late';
+
+      const trfLink = r['trf_link'] || r['TRF'] || '';
+      const trfCell = trfLink
+        ? `<a class="trf-link" href="${trfLink}" target="_blank">View <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`
+        : '<span class="no-val">—</span>';
+
+      return `<tr class="${rowClass}">
+        <td class="col-date">${label}</td>
+        <td class="col-day">${day}</td>
+        <td class="col-mono">${fmtTime(timeIn)}</td>
+        <td class="col-mono">${fmtTime(breakIn)}</td>
+        <td class="col-mono">${fmtTime(breakOut)}</td>
+        <td class="col-mono">${fmtTime(timeOut)}</td>
+        <td class="col-mono">${hoursDisplay ? fmtHours(hoursDisplay) : '<span class="no-val">—</span>'}</td>
+        <td class="col-absent">${absent>0 ? fmtNum(absent) : '<span class="no-val">—</span>'}</td>
+        <td class="col-late">${late>0 ? fmtNum(late) : '<span class="no-val">—</span>'}</td>
+        <td class="col-mono">${nightDif>0 ? fmtNum(nightDif) : '<span class="no-val">—</span>'}</td>
+        <td class="col-mono">${otHol>0 ? fmtNum(otHol) : '<span class="no-val">—</span>'}</td>
+        <td class="col-mono">${otSHol>0 ? fmtNum(otSHol) : '<span class="no-val">—</span>'}</td>
+        <td class="col-mono">${otReg>0 ? fmtNum(otReg) : '<span class="no-val">—</span>'}</td>
+        <td class="col-mono">${otRest>0 ? fmtNum(otRest) : '<span class="no-val">—</span>'}</td>
+        <td class="col-notes">${notes || '<span class="no-val">—</span>'}</td>
+        <td>${statusBadge(status)}</td>
+        <td class="col-mono">${sanction || '<span class="no-val">—</span>'}</td>
+        <td>${trfCell}</td>
+      </tr>`;
+    };
+
+    const totalRow = (label, h, a, l, oh, o, n) => {
+      const fh = h > 0
+        ? Math.floor(h) + ':' + String(Math.round((h % 1) * 60)).padStart(2, '0')
+        : '—';
+      return `<tr class="row-total">
+        <td class="col-date">${label}</td>
+        <td></td><td></td><td></td><td></td><td></td>
+        <td>${fh}</td>
+        <td>${a>0 ? a.toFixed(2) : '—'}</td>
+        <td>${l>0 ? l.toFixed(2) : '—'}</td>
+        <td>${n>0 ? n.toFixed(2) : '—'}</td>
+        <td>${oh>0 ? oh.toFixed(2) : '—'}</td>
+        <td>—</td>
+        <td>${o>0 ? o.toFixed(2) : '—'}</td>
+        <td>—</td>
+        <td colspan="4"></td>
+      </tr>`;
+    };
+
+    const half1 = days.filter(d => d.getDate() <= 15);
+    const half2 = days.filter(d => d.getDate() > 15);
+
+    const rows1 = half1.map(makeRow).join('');
+    const rows2 = half2.map(makeRow).join('');
+
+    tbody.innerHTML =
+      rows1 +
+      totalRow('TOTAL (1–15)', h1H, h1A, h1L, h1Oh, h1O, h1N) +
+      '<tr class="divider"><td colspan="18"></td></tr>' +
+      rows2 +
+      totalRow('TOTAL (16–end)', h2H, h2A, h2L, h2Oh, h2O, h2N);
+
+    // Summary cards
+    const gH = h1H+h2H, gA = h1A+h2A, gL = h1L+h2L;
+    const gO = h1O+h2O, gOh = h1Oh+h2Oh, gN = h1N+h2N;
+    const fmtCard = h => h > 0
+      ? Math.floor(h) + 'h ' + Math.round((h % 1) * 60) + 'm'
+      : '0';
+
+    document.getElementById('sumHours').textContent    = fmtCard(gH);
+    document.getElementById('sumAbsent').textContent   = gA > 0 ? gA.toFixed(1) : '0';
+    document.getElementById('sumLate').textContent     = gL > 0 ? gL.toFixed(1) : '0';
+    document.getElementById('sumOTReg').textContent    = gO > 0 ? gO.toFixed(1) : '0';
+    document.getElementById('sumOTHol').textContent    = gOh > 0 ? gOh.toFixed(1) : '0';
+    document.getElementById('sumNightDif').textContent = gN > 0 ? gN.toFixed(1) : '0';
+    document.getElementById('summaryCards').style.display = 'grid';
+  }
+
+  // ─────────────────────────────────────────────
+  // LOAD CUTOFF APPROVAL STATUS
+  // Calls HR_QUEUE_URL to check endUserSubmitted,
+  // hrApproved, timesheetApproved for this cutoff
+  // ─────────────────────────────────────────────
+  async function loadCutoffStatus() {
+    const cutoff    = document.getElementById('cutoffSelect').value;
+    const monthName = getSelectedMonthName();
+    const year      = document.getElementById('yearSelect').value;
+    const dot       = document.getElementById('approvalDot');
+    const label     = document.getElementById('approvalStatusLabel');
+    const sub       = document.getElementById('approvalStatusSub');
+    const btn       = document.getElementById('approveCutoffBtn');
+
+    // Reset to loading state
+    dot.className = 'approval-status-dot';
+    label.textContent = 'Checking cutoff status…';
+    sub.textContent = '';
+    btn.disabled = true;
+
+    try {
+      const params = new URLSearchParams({
+        company: COMPANY,
+        cutoff,
+        month: monthName,
+        year
+      });
+      const res = await fetch(HR_QUEUE_URL + '?' + params.toString());
+
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      // Your webhook returns { result: [...] } — pick the first match
+      const entry = (data.result && data.result.length > 0) ? data.result[0] : null;
+
+      cutoffState = {
+        endUserSubmitted: entry?.endUserSubmitted ?? false,
+        hrApproved:       entry?.hrApproved       ?? false,
+        timesheetApproved: entry?.timesheetApproved ?? false,
+      };
+    } catch (err) {
+      console.warn('Could not load cutoff status:', err.message);
+      // Default to safe unknown state
+      cutoffState = { endUserSubmitted: false, hrApproved: false, timesheetApproved: false };
+    }
+
+    updateApprovalBanner(cutoff, monthName, year);
+  }
+
+  function updateApprovalBanner(cutoff, monthName, year) {
+    const dot   = document.getElementById('approvalDot');
+    const label = document.getElementById('approvalStatusLabel');
+    const sub   = document.getElementById('approvalStatusSub');
+    const btn   = document.getElementById('approveCutoffBtn');
+    const period = `${cutoff === 'Q1' ? 'Cutoff 1' : 'Cutoff 2'} of ${monthName} ${year}`;
+
+    if (cutoffState.timesheetApproved || cutoffState.hrApproved) {
+      // Already fully approved — Accounting can see it
+      dot.className = 'approval-status-dot approved';
+      label.textContent = `${period} — Approved by HR`;
+      sub.textContent = 'Timesheet is locked and visible to Accounting.';
+      btn.textContent = 'Already Approved';
+      btn.className = 'btn-approve already-approved';
+      btn.disabled = true;
+      btn.onclick = null;
+    } else if (cutoffState.endUserSubmitted) {
+      // End user submitted, waiting for HR
+      dot.className = 'approval-status-dot submitted';
+      label.textContent = `${period} — Pending HR Approval`;
+      sub.textContent = 'The end user has submitted this cutoff. Review and approve to forward to Accounting.';
+      btn.className = 'btn-approve';
+      btn.disabled = false;
+      btn.onclick = openApproveModal;
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Approve Entire Cutoff`;
+    } else {
+      // Not yet submitted by end user
+      dot.className = 'approval-status-dot';
+      label.textContent = `${period} — Awaiting End User Submission`;
+      sub.textContent = 'The end user has not yet confirmed this cutoff. No action needed yet.';
+      btn.className = 'btn-approve';
+      btn.disabled = true;
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Approve Entire Cutoff`;
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // LOAD TIMESHEET for selected employee
+  // Uses your existing getEmployeeData webhook
+  // ─────────────────────────────────────────────
+  async function loadTimesheet() {
+    const employeeId   = document.getElementById('employeeSelect').value;
+    const employeeName = document.getElementById('employeeSelect').selectedOptions[0]?.text || '';
+    const monthNum     = document.getElementById('monthSelect').value;
+    const year         = document.getElementById('yearSelect').value;
+    const cutoff       = document.getElementById('cutoffSelect').value;
+    const monthName    = MONTHS[parseInt(monthNum) - 1];
+
+    if (!employeeId) {
+      document.getElementById('timesheetBody').innerHTML =
+        '<tr class="state-row"><td colspan="18">Please select an employee.</td></tr>';
+      document.getElementById('summaryCards').style.display = 'none';
+      return;
+    }
+
+    const btn = document.getElementById('refreshBtn');
+    btn.classList.add('loading');
+    document.getElementById('timesheetBody').innerHTML =
+      '<tr class="state-row"><td colspan="18"><span class="spinner"></span> Loading timesheet…</td></tr>';
+    document.getElementById('summaryCards').style.display = 'none';
+    document.getElementById('pageSubtitle').textContent =
+      employeeName + ' — ' + monthName + ' ' + year;
+
+    try {
+      // Matches exactly what your webhook (Document 7) expects
+      const params = new URLSearchParams({
+        id:      employeeId,
+        company: COMPANY,
+        cutoff:  cutoff,
+        month:   monthName,
+        year:    year
+      });
+
+      const res = await fetch(N8N_TIMESHEET_URL + '?' + params.toString());
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      // Your webhook returns: { result: [{ employee_id, employee, content: [...] }] }
+      const rows = data?.result?.[0]?.content ?? [];
+      renderTimesheet(rows, parseInt(year), parseInt(monthNum));
+    } catch (err) {
+      document.getElementById('timesheetBody').innerHTML =
+        `<tr class="state-row"><td colspan="18">Failed to load timesheet. Please try again.</td></tr>`;
+      document.getElementById('summaryCards').style.display = 'none';
+      console.error('Timesheet fetch failed:', err.message);
+    } finally {
+      btn.classList.remove('loading');
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // APPROVAL MODAL
+  // ─────────────────────────────────────────────
+  function openApproveModal() {
+    const cutoff    = document.getElementById('cutoffSelect').value;
+    const monthName = getSelectedMonthName();
+    const year      = document.getElementById('yearSelect').value;
+    const period    = `${cutoff === 'Q1' ? 'Cutoff 1' : 'Cutoff 2'} of ${monthName} ${year}`;
+
+    document.getElementById('modalBody').textContent =
+      `You are about to approve all timesheets for ${period}. Once approved, Accounting will be able to generate the payroll register.`;
+    document.getElementById('confirmApproveBtn').disabled = false;
+    document.getElementById('confirmApproveBtn').textContent = 'Yes, Approve Cutoff';
+    document.getElementById('approveModal').classList.add('show');
+  }
+
+  function closeApproveModal() {
+    document.getElementById('approveModal').classList.remove('show');
+  }
+
+  // Close modal on backdrop click
+  document.getElementById('approveModal').addEventListener('click', function(e) {
+    if (e.target === this) closeApproveModal();
+  });
+
+  // ─────────────────────────────────────────────
+  // CONFIRM APPROVAL
+  // Calls your new hr-approve-timesheet webhook
+  // which sets hrApproved=true & timesheetApproved=true
+  // in the gyfW5ReJtRCtqKli Approvals DataTable
+  // ─────────────────────────────────────────────
+  async function confirmApproval() {
+    const cutoff    = document.getElementById('cutoffSelect').value;
+    const monthName = getSelectedMonthName();
+    const year      = parseInt(document.getElementById('yearSelect').value);
+    const confirmBtn = document.getElementById('confirmApproveBtn');
+
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Approving…';
+
+    try {
+      const res = await fetch(HR_APPROVE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company: COMPANY,
+          cutoff:  cutoff,
+          month:   monthName,
+          year:    year
+        })
+      });
+
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      if (data.hrApproved === true || data.timesheetApproved === true) {
+        cutoffState.hrApproved = true;
+        cutoffState.timesheetApproved = true;
+        closeApproveModal();
+        updateApprovalBanner(cutoff, monthName, year);
+        alert(`✓ ${cutoff === 'Q1' ? 'Cutoff 1' : 'Cutoff 2'} of ${monthName} ${year} has been approved and forwarded to Accounting.`);
+      } else {
+        throw new Error(data.error || 'Unexpected response from server.');
+      }
+    } catch (err) {
+      alert('Approval failed: ' + err.message);
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Yes, Approve Cutoff';
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // EVENT LISTENERS
+  // ─────────────────────────────────────────────
+  function onCutoffChange() {
+    loadCutoffStatus();
+    if (document.getElementById('employeeSelect').value) {
+      loadTimesheet();
+    }
+  }
+
+  document.getElementById('employeeSelect').addEventListener('change', loadTimesheet);
+  document.getElementById('monthSelect').addEventListener('change', onCutoffChange);
+  document.getElementById('yearSelect').addEventListener('change', onCutoffChange);
+  document.getElementById('cutoffSelect').addEventListener('change', onCutoffChange);
+
+  // ─────────────────────────────────────────────
+  // INBOX URL BRIDGE
+  // Reads URL parameters to auto-fill the dropdowns
+  // when coming from hr-inbox.html
+  // ─────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('cutoff') && urlParams.has('month') && urlParams.has('year')) {
+      document.getElementById('cutoffSelect').value = urlParams.get('cutoff');
+      document.getElementById('monthSelect').value = urlParams.get('month');
+      document.getElementById('yearSelect').value = urlParams.get('year');
+    }
+    // Load cutoff status on page open
+    loadCutoffStatus();
+  });
+</script>
+
+</body>
+</html>
