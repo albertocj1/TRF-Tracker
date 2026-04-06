@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrowdSource – SIL Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f5f7;
+    --sidebar-bg: #ffffff;
+    --topbar-bg: #1a1a2e;
+    --accent: #1565c0;
+    --accent-light: #e8f0fe;
+    --text-primary: #1a1a2e;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --border: #e5e7eb;
+    --row-hover: #f9fafb;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── TOPBAR ── */
+  .topbar { background: var(--topbar-bg); display: flex; align-items: center; padding: 0 28px; height: 70px; gap: 20px; flex-shrink: 0; }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+  .logo-img { height: 40px; width: auto; object-fit: contain; }
+  .logo-text { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: .5px; }
+  .logo-text span { color: #64b5f6; }
+  .topbar-user { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .topbar-user-name { text-align: right; color: #fff; line-height: 1.3; }
+  .topbar-user-name strong { display: block; font-size: 13.5px; font-weight: 600; }
+  .topbar-user-name span { font-size: 12px; color: rgba(255,255,255,.55); }
+  .avatar { width: 40px; height: 40px; background: rgba(255,255,255,.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.8); }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 210px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 10px 20px; font-size: 13.5px; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: background .15s, color .15s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--accent-light); color: var(--accent); }
+  .nav-item.active { color: var(--accent); background: var(--accent-light); font-weight: 600; }
+  .nav-item svg { flex-shrink: 0; opacity: .7; }
+  .nav-item.active svg { opacity: 1; }
+  .nav-divider { height: 1px; background: var(--border); margin: 12px 16px; }
+  .nav-bottom { margin-top: auto; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; }
+  .main::-webkit-scrollbar { width: 6px; }
+  .main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+  /* ── PAGE HEADER ── */
+  .page-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .page-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── CONTROLS ── */
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .search-input {
+    appearance: none; border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 9px 14px 9px 36px; font-family: inherit; font-size: 13.5px;
+    color: var(--text-primary); outline: none; transition: border .2s;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat left 12px center;
+    width: 250px;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
+  .btn { display: flex; align-items: center; gap: 6px; background: #fff; color: var(--text-secondary); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 14px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.primary:hover { background: #0f4c92; border-color: #0f4c92; color: #fff; }
+
+  .btn.loading svg { animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── ERROR BANNER ── */
+  .error-banner { display: none; align-items: center; gap: 10px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #dc2626; }
+  .error-banner.visible { display: flex; }
+  .error-banner svg { flex-shrink: 0; }
+
+  /* ── TABLE CARD ── */
+  .table-card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 200px); }
+  .table-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+  .table-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+  table { width: 100%; border-collapse: collapse; min-width: 600px; }
+  thead th {
+    position: sticky; top: 0; z-index: 2;
+    text-align: left;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--text-muted); padding: 14px 20px;
+    background: #fafbfc; border-bottom: 1px solid var(--border);
+  }
+  thead th.center { text-align: center; }
+
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--row-hover); }
+  tbody td { padding: 14px 20px; font-size: 13.5px; color: var(--text-primary); vertical-align: middle; }
+  tbody td.center { text-align: center; }
+  
+  .emp-name { font-weight: 600; color: var(--text-primary); }
+  .emp-dept { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── EDITABLE STYLES ── */
+  .sil-input {
+    width: 80px;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    border: 1.5px solid transparent;
+    background: transparent;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .sil-input:hover { border-color: #cbd5e1; background: #f8fafc; }
+  .sil-input:focus { border-color: var(--accent); background: #fff; outline: none; box-shadow: 0 0 0 2px rgba(21,101,192,0.1); }
+  
+  /* Highlight row when edited */
+  tr.edited { background-color: #fffbeb !important; }
+  tr.edited td { border-bottom: 1px solid #fde68a; }
+
+  .state-row td { text-align: center; padding: 48px !important; color: var(--text-muted); font-size: 13.5px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: currentColor; border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="#">
+    <img src="logo.png" alt="CrowdSource Logo" class="logo-img" onerror="this.style.display='none'">
+    <span class="logo-text"><span>CROWD</span>SOURCE</span>
+  </a>
+  <div class="topbar-user">
+    <div class="topbar-user-name">
+      <strong>HR Admin</strong>
+      <span>Human Resources</span>
+    </div>
+    <div class="avatar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <a class="nav-item" href="index.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      TRF Dashboard
+    </a>
+    <a class="nav-item" href="timesheets.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Timesheets
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      HR Closing Letters
+    </a>
+    <a class="nav-item" href="hr-database.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      HR Database
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+      Onboarding
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Background Investigation
+    </a>
+    <a class="nav-item active" href="sil-dashboard.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      SIL Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Exit Letters
+    </a>
+    <div class="nav-divider"></div>
+    <div class="nav-bottom">
+      <a class="nav-item" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Help
+      </a>
+      <a class="nav-item" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </a>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">Service Incentive Leave (SIL)</div>
+        <div class="page-subtitle">Manage and manually adjust employee leave balances.</div>
+      </div>
+      <div class="controls">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search employees..." onkeyup="filterTable()">
+        
+        <button class="btn" id="refreshBtn" onclick="loadSILData()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+
+        <button class="btn primary" id="saveBtn" onclick="saveSILEdits()" style="display:none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Changes
+        </button>
+
+      </div>
+    </div>
+
+    <div class="error-banner" id="errorBanner">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="errorMsg"></span>
+    </div>
+
+    <div class="table-card">
+      <div class="table-scroll">
+        <table id="silTable">
+          <thead>
+            <tr>
+              <th>Employee Name</th>
+              <th>Department</th>
+              <th>Job Title</th>
+              <th class="center">Current SIL Balance</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr class="state-row">
+              <td colspan="4">Click Refresh to load SIL balances.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+    // ⚠️ UPDATE THESE URLS TO POINT TO YOUR N8N WEBHOOKS ⚠️
+    const GET_SIL_URL = 'https://primary-production-a810.up.railway.app/webhook/get-all-sil';
+    const SAVE_SIL_URL = 'https://primary-production-a810.up.railway.app/webhook/update-sil';
+  
+    // Keep a copy of original data so we can see what changed
+    let originalData = {}; 
+
+    function showError(msg) {
+      document.getElementById('errorMsg').textContent = msg;
+      document.getElementById('errorBanner').style.display = 'flex';
+    }
+  
+    function clearError() {
+      document.getElementById('errorBanner').style.display = 'none';
+    }
+
+    // ── EDIT TRACKING ──
+    function markAsEdited(inputEl) {
+      const row = inputEl.closest('tr');
+      const empId = row.getAttribute('data-id');
+      const originalValue = originalData[empId];
+      
+      // If the value is different from the original, mark row as edited
+      if (parseFloat(inputEl.value) !== parseFloat(originalValue)) {
+        row.classList.add('edited');
+      } else {
+        row.classList.remove('edited');
+      }
+
+      // Check if any rows are edited to show/hide the Save button
+      const hasEdits = document.querySelectorAll('tr.edited').length > 0;
+      document.getElementById('saveBtn').style.display = hasEdits ? 'flex' : 'none';
+    }
+
+    // ── SEARCH FILTER ──
+    function filterTable() {
+      const filter = document.getElementById('searchInput').value.toUpperCase();
+      const trs = document.getElementById('tableBody').getElementsByTagName('tr');
+      
+      for (let i = 0; i < trs.length; i++) {
+        if (trs[i].classList.contains('state-row')) continue;
+        const nameTd = trs[i].getElementsByTagName('td')[0];
+        if (nameTd) {
+          const txtValue = nameTd.textContent || nameTd.innerText;
+          trs[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }       
+      }
+    }
+  
+    // ── LOAD DATA ──
+    async function loadSILData() {
+      clearError();
+      const btn = document.getElementById('refreshBtn');
+      btn.classList.add('loading');
+      document.getElementById('tableBody').innerHTML = '<tr class="state-row"><td colspan="4"><span class="spinner"></span> Loading SIL data...</td></tr>';
+      document.getElementById('saveBtn').style.display = 'none';
+      originalData = {};
+  
+      try {
+        const res = await fetch(GET_SIL_URL);
+        const data = await res.json();
+        
+        let employees = Array.isArray(data) ? data : (data.employees || []);
+
+        if (employees.length === 0) {
+           document.getElementById('tableBody').innerHTML = '<tr class="state-row"><td colspan="4">No employees found.</td></tr>';
+           return;
+        }
+
+        let html = '';
+        employees.forEach(emp => {
+          // Ensure we have an ID to track saves
+          const empId = emp.id || emp.employee_id || emp.pin; 
+          const currentSil = emp.sil_balance || emp.sil || 0;
+          
+          originalData[empId] = currentSil;
+
+          html += `
+            <tr data-id="${empId}">
+              <td>
+                <div class="emp-name">${emp.employee_name || emp.name || 'Unknown'}</div>
+                <div class="emp-dept">${emp.pin || empId}</div>
+              </td>
+              <td>${emp.department || '—'}</td>
+              <td>${emp.job_title || '—'}</td>
+              <td class="center">
+                <input type="number" step="0.5" class="sil-input" value="${currentSil}" oninput="markAsEdited(this)">
+              </td>
+            </tr>
+          `;
+        });
+        
+        document.getElementById('tableBody').innerHTML = html;
+        filterTable(); // Re-apply search if there is text in the box
+
+      } catch (err) {
+        showError('Failed to load SIL database. Please check your connection.');
+        document.getElementById('tableBody').innerHTML = '<tr class="state-row"><td colspan="4">Error loading data.</td></tr>';
+      } finally {
+        btn.classList.remove('loading');
+      }
+    }
+
+    // ── SAVE EDITS FUNCTION ──
+    async function saveSILEdits() {
+      const editedRows = Array.from(document.querySelectorAll('tr.edited'));
+      if (editedRows.length === 0) return;
+
+      const btn = document.getElementById('saveBtn');
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      // Package only the rows that were changed
+      const payload = {
+        updates: editedRows.map(row => {
+          const input = row.querySelector('.sil-input');
+          return {
+            employee_id: row.getAttribute('data-id'),
+            new_sil_balance: parseFloat(input.value)
+          };
+        })
+      };
+
+      try {
+        const res = await fetch(SAVE_SIL_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          // Success! Remove edits and update our originalData tracker
+          editedRows.forEach(row => {
+             row.classList.remove('edited');
+             const empId = row.getAttribute('data-id');
+             const input = row.querySelector('.sil-input');
+             originalData[empId] = parseFloat(input.value);
+          });
+          btn.style.display = 'none';
+        } else {
+          showError('Failed to save changes. Please try again.');
+        }
+      } catch (err) {
+        showError('Network error. Check your connection.');
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+    
+    // Auto-load on page open
+    window.addEventListener('DOMContentLoaded', loadSILData);
+
+</script>
+
+</body>
+</html>

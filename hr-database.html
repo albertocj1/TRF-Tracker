@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrowdSource – HR Database</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f5f7;
+    --sidebar-bg: #ffffff;
+    --topbar-bg: #1a1a2e;
+    --accent: #1565c0;
+    --accent-light: #e8f0fe;
+    --text-primary: #1a1a2e;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --border: #e5e7eb;
+    --row-hover: #f9fafb;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,.1);
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+
+  /* ── TOPBAR ── */
+  .topbar { background: var(--topbar-bg); display: flex; align-items: center; padding: 0 28px; height: 70px; gap: 20px; flex-shrink: 0; }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+  .logo-img { height: 40px; width: auto; object-fit: contain; }
+  .logo-text { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: .5px; }
+  .logo-text span { color: #64b5f6; }
+  .topbar-user { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .topbar-user-name { text-align: right; color: #fff; line-height: 1.3; }
+  .topbar-user-name strong { display: block; font-size: 13.5px; font-weight: 600; }
+  .topbar-user-name span { font-size: 12px; color: rgba(255,255,255,.55); }
+  .avatar { width: 40px; height: 40px; background: rgba(255,255,255,.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.8); }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 210px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 10px 20px; font-size: 13.5px; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: background .15s, color .15s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--accent-light); color: var(--accent); }
+  .nav-item.active { color: var(--accent); background: var(--accent-light); font-weight: 600; }
+  .nav-item svg { flex-shrink: 0; opacity: .7; }
+  .nav-item.active svg { opacity: 1; }
+  .nav-divider { height: 1px; background: var(--border); margin: 12px 16px; }
+  .nav-bottom { margin-top: auto; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; }
+  .main::-webkit-scrollbar { width: 6px; }
+  .main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+  /* ── PAGE HEADER ── */
+  .page-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .page-title { font-size: 20px; font-weight: 700; }
+  .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── CONTROLS ── */
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .search-input { border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 14px; font-family: inherit; font-size: 13.5px; width: 250px; outline: none; transition: border .2s; }
+  .search-input:focus { border-color: var(--accent); }
+
+  /* ── BUTTONS ── */
+  .btn { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 14px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .2s; color: var(--text-primary); font-family: inherit; white-space: nowrap; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.primary:hover { background: #0f4c92; }
+  .btn.danger { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+  .btn.danger:hover { background: #fca5a5; }
+
+  /* ── TABLE CARD ── */
+  .table-card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden; display: flex; flex-direction: column; }
+
+  /* ── TABLE SCROLL WRAPPER ── */
+  .table-scroll { width: 100%; overflow-x: hidden; }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    table-layout: fixed; /* Forces columns to obey our percentages */
+  }
+
+  /* Fluid Column Widths */
+  col.col-pin        { width: 7%; }
+  col.col-name       { width: 16%; }
+  col.col-email      { width: 18%; }
+  col.col-personal   { width: 18%; }
+  col.col-dept       { width: 10%; }
+  col.col-role       { width: 13%; }
+  col.col-supervisor { width: 14%; }
+  col.col-salary     { width: 8%; }
+  col.col-actions    { width: 130px; } /* Keep actions fixed so buttons don't shrink */
+
+  th {
+    background: #fafbfc;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-muted);
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  td {
+    padding: 11px 12px;
+    font-size: 12.5px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--row-hover); }
+
+  .emp-name { font-weight: 600; color: var(--text-primary); }
+
+  .emp-pin {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: #f3f4f6;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-block;
+    outline: none;
+    transition: background .2s, box-shadow .2s;
+    width: 100%; /* Fill available cell space */
+    text-align: center;
+  }
+  .emp-pin:hover { background: #e9eaf0; }
+  .emp-pin:focus { background: #fff; box-shadow: 0 0 0 2px var(--accent); color: var(--text-primary); }
+
+  /* Actions cell — prevent truncation of buttons */
+  td.actions-cell { overflow: visible; }
+  .actions { display: flex; gap: 5px; }
+  .actions .btn { padding: 5px 10px; font-size: 11.5px; }
+
+  /* ── PAGINATION ── */
+  .pagination-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-top: 1px solid var(--border); background: #fafbfc; flex-wrap: wrap; gap: 10px; }
+  .pagination-info { font-size: 12.5px; color: var(--text-muted); }
+  .pagination-controls { display: flex; align-items: center; gap: 4px; }
+  .page-btn { min-width: 32px; height: 32px; padding: 0 8px; border: 1.5px solid var(--border); border-radius: 6px; background: #fff; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; justify-content: center; }
+  .page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .page-size-select { border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 10px; font-family: inherit; font-size: 12.5px; color: var(--text-secondary); outline: none; cursor: pointer; }
+  .page-size-select:focus { border-color: var(--accent); }
+
+  /* ── MODAL ── */
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(2px); }
+  .modal-overlay.active { display: flex; }
+  .modal { background: #fff; width: 500px; max-width: 90%; border-radius: 12px; box-shadow: var(--shadow-lg); overflow: hidden; display: flex; flex-direction: column; }
+  .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h2 { font-size: 16px; font-weight: 700; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); line-height: 1; }
+  .modal-body { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-height: 70vh; overflow-y: auto; }
+  .modal-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: #fafbfc; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: span 2; }
+  .form-group label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .form-group input, .form-group select { padding: 10px; border: 1.5px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 13.5px; outline: none; }
+  .form-group input:focus { border-color: var(--accent); }
+
+  /* ── DELETE MODAL ── */
+  .delete-modal { background: #fff; width: 400px; max-width: 90%; border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden; animation: popIn .18s ease; }
+  @keyframes popIn { from { transform: scale(0.93); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .delete-modal-icon { width: 52px; height: 52px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+  .delete-modal-body { padding: 28px 28px 20px; text-align: center; }
+  .delete-modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
+  .delete-modal-name { font-size: 14px; font-weight: 600; color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 6px 14px; display: inline-block; margin-bottom: 12px; }
+  .delete-modal-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .delete-modal-footer { padding: 16px 28px 24px; display: flex; gap: 10px; }
+  .delete-modal-footer .btn { flex: 1; justify-content: center; padding: 11px 14px; font-size: 13.5px; }
+  .btn.confirm-delete { background: #dc2626; color: #fff; border-color: #dc2626; }
+  .btn.confirm-delete:hover { background: #b91c1c; border-color: #b91c1c; color: #fff; }
+
+  /* ── SPINNER ── */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #ccc; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── EMPTY / LOADING STATE ── */
+  .state-cell { text-align: center; padding: 48px !important; color: var(--text-muted); font-size: 13.5px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="#">
+    <img src="logo.png" alt="CrowdSource Logo" class="logo-img" onerror="this.style.display='none'">
+    <span class="logo-text"><span>CROWD</span>SOURCE</span>
+  </a>
+  <div class="topbar-user">
+    <div class="topbar-user-name">
+      <strong>HR Admin</strong>
+      <span>Human Resources</span>
+    </div>
+    <div class="avatar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar">
+    <a class="nav-item" href="index.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      TRF Dashboard
+    </a>
+    <a class="nav-item" href="timesheets.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Timesheets
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      HR Closing Letters
+    </a>
+    <a class="nav-item active" href="hr-database.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      HR Database
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+      Onboarding
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Background Investigation
+    </a>
+    <a class="nav-item" href="sil-dashboard.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      SIL Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Exit Letters
+    </a>
+    <div class="nav-divider"></div>
+    <div class="nav-bottom">
+      <a class="nav-item" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Help
+      </a>
+      <a class="nav-item" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </a>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Employee Database</div>
+        <div class="page-subtitle">Manage employee records, roles, and access.</div>
+      </div>
+      <div class="controls">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search employees..." onkeyup="filterTable()">
+        <button class="btn" onclick="loadEmployees()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+        <button class="btn primary" onclick="openModal()">+ Add Employee</button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-scroll">
+        <table id="empTable">
+          <colgroup>
+            <col class="col-pin">
+            <col class="col-name">
+            <col class="col-email">
+            <col class="col-personal">
+            <col class="col-dept">
+            <col class="col-role">
+            <col class="col-supervisor">
+            <col class="col-salary">
+            <col class="col-actions">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>PIN</th>
+              <th>Name</th>
+              <th>Work Email</th>
+              <th>Personal Email</th>
+              <th>Department</th>
+              <th>Role</th>
+              <th>Supervisor</th>
+              <th>Salary</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="9" class="state-cell"><span class="spinner"></span> Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination-bar" id="paginationBar" style="display:none;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="pagination-info" id="pageInfo"></span>
+          <select class="page-size-select" id="pageSizeSelect" onchange="changePageSize()">
+            <option value="10">10 / page</option>
+            <option value="25" selected>25 / page</option>
+            <option value="50">50 / page</option>
+            <option value="100">100 / page</option>
+          </select>
+        </div>
+        <div class="pagination-controls" id="pageControls"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="empModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Add Employee</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="f_id">
+      <div class="form-group">
+        <label>PIN (Employee ID)</label>
+        <input type="text" id="f_pin" placeholder="e.g. 1099">
+      </div>
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" id="f_fn" placeholder="John">
+      </div>
+      <div class="form-group">
+        <label>Middle Name</label>
+        <input type="text" id="f_mn" placeholder="A.">
+      </div>
+      <div class="form-group">
+        <label>Last Name</label>
+        <input type="text" id="f_ln" placeholder="Doe">
+      </div>
+      <div class="form-group full">
+        <label>Work Email</label>
+        <input type="email" id="f_email" placeholder="john.doe@crowdsource.com">
+      </div>
+      <div class="form-group full">
+        <label>Personal Email</label>
+        <input type="email" id="f_personal_email" placeholder="john123@gmail.com">
+      </div>
+      <div class="form-group">
+        <label>Department</label>
+        <input type="text" id="f_dep_id" placeholder="e.g. Engineering">
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <input type="text" id="f_role_id" placeholder="e.g. Software Developer">
+      </div>
+      <div class="form-group full">
+        <label>Supervisor</label>
+        <input type="text" id="f_supervisor" placeholder="e.g. Maria Beatrice Pedroche">
+      </div>
+      <div class="form-group">
+        <label>Salary</label>
+        <input type="number" id="f_salary" placeholder="e.g. 25000">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" id="saveBtn" onclick="saveEmployee()">Save Employee</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="deleteModal">
+  <div class="delete-modal">
+    <div class="delete-modal-body">
+      <div class="delete-modal-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </div>
+      <div class="delete-modal-title">Delete Employee</div>
+      <div class="delete-modal-name" id="deleteEmpName">—</div>
+      <div class="delete-modal-desc">This will permanently remove the employee record and cannot be undone. Are you sure you want to continue?</div>
+    </div>
+    <div class="delete-modal-footer">
+      <button class="btn" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn confirm-delete" id="confirmDeleteBtn" onclick="confirmDelete()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        Yes, Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const URL_GET    = 'https://primary-production-a810.up.railway.app/webhook/hr-get-employees';
+  const URL_CREATE = 'https://primary-production-a810.up.railway.app/webhook/hr-create-employee';
+  const URL_UPDATE = 'https://primary-production-a810.up.railway.app/webhook/hr-update-employee';
+  const URL_DELETE = 'https://primary-production-a810.up.railway.app/webhook/hr-delete-employee';
+
+  let employeesData = [];
+  let filteredData  = [];
+  let currentPage   = 1;
+
+  function getPageSize() {
+    return parseInt(document.getElementById('pageSizeSelect').value);
+  }
+
+  async function loadEmployees() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '<tr><td colspan="9" class="state-cell"><span class="spinner"></span> Loading database...</td></tr>';
+    document.getElementById('paginationBar').style.display = 'none';
+    try {
+      const res = await fetch(URL_GET);
+      const raw = await res.json();
+      // Handle n8n wrapped array { json: {...} } or flat array
+      employeesData = Array.isArray(raw) ? raw.map(i => i.json ?? i) : [];
+      filteredData  = [...employeesData];
+      currentPage   = 1;
+      renderTable();
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="9" class="state-cell" style="color:#dc2626;">Failed to connect to database.</td></tr>';
+    }
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    if (filteredData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" class="state-cell">No employees found.</td></tr>';
+      document.getElementById('paginationBar').style.display = 'none';
+      return;
+    }
+
+    const pageSize   = getPageSize();
+    const totalPages = Math.ceil(filteredData.length / pageSize);
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start     = (currentPage - 1) * pageSize;
+    const pageItems = filteredData.slice(start, start + pageSize);
+
+    tbody.innerHTML = pageItems.map(emp => {
+      const globalIndex = employeesData.indexOf(emp);
+      const fullName    = [emp.fn, emp.mn, emp.ln].filter(Boolean).join(' ') || '—';
+      return `<tr>
+        <td><span class="emp-pin" contenteditable="true" data-id="${emp.id}" onblur="savePinEdit(this)">${emp.pin || '—'}</span></td>
+        <td class="emp-name" title="${fullName}">${fullName}</td>
+        <td title="${emp.email || ''}">${emp.email || '—'}</td>
+        <td title="${emp.personal_email || ''}">${emp.personal_email || '—'}</td>
+        <td title="${emp.department_name || emp.dep_id || ''}">${emp.department_name || emp.dep_id || '—'}</td>
+        <td title="${emp.role_name || emp.role_id || ''}">${emp.role_name || emp.role_id || '—'}</td>
+        <td title="${emp.supervisor || ''}">${emp.supervisor || '—'}</td>
+        <td>${emp.salary ? '₱' + Number(emp.salary).toLocaleString() : '—'}</td>
+        <td class="actions-cell">
+          <div class="actions">
+            <button class="btn" onclick="openModal(${globalIndex})">Edit</button>
+            <button class="btn danger" onclick="deleteEmployee('${emp.id}')">Delete</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Pagination info
+    const from = start + 1;
+    const to   = Math.min(start + pageSize, filteredData.length);
+    document.getElementById('pageInfo').textContent = `${from}–${to} of ${filteredData.length} employees`;
+    document.getElementById('paginationBar').style.display = 'flex';
+
+    // Page buttons
+    const controls = document.getElementById('pageControls');
+    let btns = `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>&#8249;</button>`;
+    getPageRange(currentPage, totalPages).forEach(p => {
+      if (p === '...') {
+        btns += `<span style="padding:0 4px;color:var(--text-muted);font-size:13px;">…</span>`;
+      } else {
+        btns += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+      }
+    });
+    btns += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>&#8250;</button>`;
+    controls.innerHTML = btns;
+  }
+
+  function getPageRange(current, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
+    if (current >= total - 3) return [1, '...', total-4, total-3, total-2, total-1, total];
+    return [1, '...', current-1, current, current+1, '...', total];
+  }
+
+  function goToPage(page) {
+    const totalPages = Math.ceil(filteredData.length / getPageSize());
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    renderTable();
+  }
+
+  function changePageSize() { currentPage = 1; renderTable(); }
+
+  function filterTable() {
+    const filter = document.getElementById('searchInput').value.toLowerCase();
+    filteredData = filter
+      ? employeesData.filter(emp => {
+          const fullName = [emp.fn, emp.mn, emp.ln].filter(Boolean).join(' ');
+          return [fullName, emp.pin, emp.email, emp.personal_email, emp.department_name, emp.dep_id, emp.role_name, emp.role_id, emp.supervisor]
+            .some(v => String(v || '').toLowerCase().includes(filter));
+        })
+      : [...employeesData];
+    currentPage = 1;
+    renderTable();
+  }
+
+  function openModal(index = -1) {
+    document.getElementById('empModal').classList.add('active');
+    if (index >= 0) {
+      const emp = employeesData[index];
+      document.getElementById('modalTitle').innerText = 'Edit Employee';
+      document.getElementById('f_id').value             = emp.id || '';
+      document.getElementById('f_pin').value            = emp.pin || '';
+      document.getElementById('f_fn').value             = emp.fn || '';
+      document.getElementById('f_mn').value             = emp.mn || '';
+      document.getElementById('f_ln').value             = emp.ln || '';
+      document.getElementById('f_email').value          = emp.email || '';
+      document.getElementById('f_personal_email').value = emp.personal_email || '';
+      document.getElementById('f_dep_id').value         = emp.department_name || emp.dep_id || '';
+      document.getElementById('f_role_id').value        = emp.role_name || emp.role_id || '';
+      document.getElementById('f_supervisor').value     = emp.supervisor || '';
+      document.getElementById('f_salary').value         = emp.salary || '';
+    } else {
+      document.getElementById('modalTitle').innerText = 'Add New Employee';
+      document.getElementById('f_id').value = '';
+      document.querySelectorAll('.modal-body input[type="text"], .modal-body input[type="email"], .modal-body input[type="number"]')
+        .forEach(inp => inp.value = '');
+    }
+  }
+
+  function closeModal() { document.getElementById('empModal').classList.remove('active'); }
+
+  async function saveEmployee() {
+    const btn = document.getElementById('saveBtn');
+    btn.innerHTML = '<span class="spinner"></span> Saving...';
+    btn.disabled  = true;
+    const id = document.getElementById('f_id').value;
+    const payload = {
+      id,
+      pin:            document.getElementById('f_pin').value,
+      fn:             document.getElementById('f_fn').value,
+      mn:             document.getElementById('f_mn').value,
+      ln:             document.getElementById('f_ln').value,
+      email:          document.getElementById('f_email').value,
+      personal_email: document.getElementById('f_personal_email').value,
+      dep_id:         document.getElementById('f_dep_id').value,
+      role_id:        document.getElementById('f_role_id').value,
+      supervisor:     document.getElementById('f_supervisor').value,
+      salary:         document.getElementById('f_salary').value
+    };
+    try {
+      await fetch(id ? URL_UPDATE : URL_CREATE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      closeModal();
+      loadEmployees();
+    } catch (err) {
+      alert('Error saving employee.');
+    } finally {
+      btn.innerHTML = 'Save Employee';
+      btn.disabled  = false;
+    }
+  }
+
+  let pendingDeleteId = null;
+
+  function deleteEmployee(id) {
+    const emp = employeesData.find(e => String(e.id) === String(id));
+    if (!emp) return;
+    const fullName = [emp.fn, emp.mn, emp.ln].filter(Boolean).join(' ') || `PIN ${emp.pin}`;
+    document.getElementById('deleteEmpName').textContent = fullName;
+    pendingDeleteId = id;
+    document.getElementById('deleteModal').classList.add('active');
+  }
+
+  function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+    pendingDeleteId = null;
+  }
+
+  async function confirmDelete() {
+    if (!pendingDeleteId) return;
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.innerHTML = '<span class="spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,.3);width:14px;height:14px;"></span> Deleting...';
+    btn.disabled  = true;
+    try {
+      await fetch(URL_DELETE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: pendingDeleteId })
+      });
+      closeDeleteModal();
+      loadEmployees();
+    } catch (err) {
+      alert('Error deleting employee.');
+    } finally {
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg> Yes, Delete';
+      btn.disabled  = false;
+    }
+  }
+
+  async function savePinEdit(span) {
+    const newPin = span.innerText.trim();
+    const id     = span.getAttribute('data-id');
+    if (!id || !newPin) return;
+    const emp = employeesData.find(e => String(e.id) === String(id));
+    if (!emp || newPin === (emp.pin || '')) return;
+    span.style.opacity = '0.5';
+    try {
+      await fetch(URL_UPDATE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...emp, pin: newPin })
+      });
+      emp.pin = newPin;
+    } catch (err) {
+      alert('Error saving PIN.');
+      span.innerText = emp.pin || '—';
+    } finally {
+      span.style.opacity = '1';
+    }
+  }
+
+  window.onload = loadEmployees;
+</script>
+</body>
+</html>
