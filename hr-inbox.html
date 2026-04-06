@@ -4,64 +4,199 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HR Inbox – CrowdSource</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: #f4f5f7; color: #1a1a2e; }
-  
-  .topbar { background: #1a1a2e; padding: 0 28px; height: 70px; display: flex; align-items: center; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f5f7;
+    --sidebar-bg: #ffffff;
+    --topbar-bg: #1a1a2e;
+    --accent: #1565c0;
+    --accent-light: #e8f0fe;
+    --text-primary: #1a1a2e;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --border: #e5e7eb;
+    --row-hover: #f9fafb;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── TOPBAR ── */
+  .topbar { background: var(--topbar-bg); display: flex; align-items: center; padding: 0 28px; height: 70px; gap: 20px; flex-shrink: 0; }
+  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+  .logo-img { height: 40px; width: auto; object-fit: contain; } /* Replace with your actual logo logic if needed */
   .logo-text { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: .5px; }
   .logo-text span { color: #64b5f6; }
+  .topbar-user { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .topbar-user-name { text-align: right; color: #fff; line-height: 1.3; }
+  .topbar-user-name strong { display: block; font-size: 13.5px; font-weight: 600; }
+  .topbar-user-name span { font-size: 12px; color: rgba(255,255,255,.55); }
+  .avatar { width: 40px; height: 40px; background: rgba(255,255,255,.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,.8); }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 210px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 10px 20px; font-size: 13.5px; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: background .15s, color .15s; cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--accent-light); color: var(--accent); }
+  .nav-item.active { color: var(--accent); background: var(--accent-light); font-weight: 600; }
+  .nav-item svg { flex-shrink: 0; opacity: .7; }
+  .nav-item.active svg { opacity: 1; }
+  .nav-divider { height: 1px; background: var(--border); margin: 12px 16px; }
+  .nav-bottom { margin-top: auto; }
+
+  /* ── MAIN ── */
+  .main { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; }
+  .main::-webkit-scrollbar { width: 6px; }
+  .main::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+  /* ── PAGE HEADER ── */
+  .page-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .page-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  .btn-refresh { display: flex; align-items: center; gap: 6px; background: #fff; color: var(--text-secondary); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 14px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: border .2s, color .2s; }
+  .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-refresh.loading svg { animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TABLE CARD ── */
+  .table-card { background: #fff; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .table-scroll { overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 180px); }
   
-  .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
-  .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
-  .page-title { font-size: 24px; font-weight: 700; }
-  .page-subtitle { color: #6b7280; font-size: 14px; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; min-width: 700px; text-align: left; }
+  thead th {
+    position: sticky; top: 0; z-index: 2;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--text-muted); padding: 14px 20px;
+    background: #fafbfc; border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
   
-  .card { background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,.07); overflow: hidden; }
-  table { width: 100%; border-collapse: collapse; text-align: left; }
-  th { background: #fafbfc; color: #9ca3af; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 14px 20px; border-bottom: 1px solid #e5e7eb; }
-  td { padding: 16px 20px; font-size: 14px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover { background: #f9fafb; }
-  
-  .badge { background: #fff8e1; color: #b45309; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-  .btn-review { background: #e8f0fe; color: #1565c0; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; display: inline-block; transition: 0.2s; }
-  .btn-review:hover { background: #1565c0; color: #fff; }
-  
-  .empty-state { text-align: center; padding: 60px 20px; color: #6b7280; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--row-hover); }
+  tbody td { padding: 16px 20px; font-size: 13.5px; color: var(--text-primary); vertical-align: middle; }
+  tbody td.col-date { font-weight: 600; font-size: 14px; }
+
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; }
+  .badge-pending  { background: #fff8e1; color: #b45309; }
+
+  .btn-review { background: var(--accent-light); color: var(--accent); text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; display: inline-block; transition: 0.2s; border: none; cursor: pointer; }
+  .btn-review:hover { background: var(--accent); color: #fff; }
+
+  .state-row td { text-align: center; padding: 60px 20px !important; color: var(--text-muted); font-size: 13.5px; }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
 </style>
 </head>
 <body>
 
 <header class="topbar">
-  <div class="logo-text"><span>CROWD</span>SOURCE HR INBOX</div>
+  <a class="logo" href="#">
+    <span class="logo-text"><span>CROWD</span>SOURCE</span>
+  </a>
+  <div class="topbar-user">
+    <div class="topbar-user-name">
+      <strong>Lebron James</strong>
+      <span>Human Resources</span>
+    </div>
+    <div class="avatar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+  </div>
 </header>
 
-<div class="container">
-  <div class="page-header">
-    <div>
-      <div class="page-title">Pending Approvals</div>
-      <div class="page-subtitle">Timesheets submitted by the end user awaiting your review.</div>
-    </div>
-    <button onclick="loadQueue()" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; font-family: inherit; font-weight: 500;">Refresh Inbox</button>
-  </div>
+<div class="layout">
 
-  <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>Payroll Period</th>
-          <th>Cutoff Range</th>
-          <th>Status</th>
-          <th style="text-align:right">Action</th>
-        </tr>
-      </thead>
-      <tbody id="queueBody">
-        <tr><td colspan="4" class="empty-state">Loading pending items...</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <nav class="sidebar">
+    <a class="nav-item" href="index.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      TRF Dashboard
+    </a>
+    
+    <a class="nav-item active" href="hr-inbox.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      HR Inbox
+    </a>
+
+    <a class="nav-item" href="timesheets-test.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Timesheets
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      HR Closing Letters
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      HR Database
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+      Onboarding
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Background Investigation
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      SIL Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Exit Letters
+    </a>
+    <div class="nav-divider"></div>
+    <div class="nav-bottom">
+      <a class="nav-item" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Help
+      </a>
+      <a class="nav-item" href="#">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </a>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">Pending Approvals</div>
+        <div class="page-subtitle">Timesheets submitted by the end user awaiting your review.</div>
+      </div>
+      <button class="btn-refresh" id="refreshBtn" onclick="loadQueue()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh Inbox
+      </button>
+    </div>
+
+    <div class="table-card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Payroll Period</th>
+              <th>Cutoff Range</th>
+              <th>Status</th>
+              <th style="text-align:right; padding-right: 20px;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="queueBody">
+            <tr class="state-row"><td colspan="4"><span class="spinner"></span> Loading pending items...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
 </div>
 
 <script>
@@ -71,38 +206,46 @@
 
   async function loadQueue() {
     const tbody = document.getElementById('queueBody');
-    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Fetching pending cutoffs...</td></tr>';
+    const btn = document.getElementById('refreshBtn');
+    
+    if (btn) btn.classList.add('loading');
+    tbody.innerHTML = '<tr class="state-row"><td colspan="4"><span class="spinner"></span> Fetching pending cutoffs...</td></tr>';
+    
     try {
       const res = await fetch(HR_GET_SUBMITTED_URL + '?company=' + COMPANY);
       const data = await res.json();
       const rows = data.result || [];
       
       if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">You are all caught up! No pending approvals.</td></tr>';
+        tbody.innerHTML = '<tr class="state-row"><td colspan="4">You are all caught up! No pending approvals.</td></tr>';
         return;
       }
 
       tbody.innerHTML = rows.map(r => {
         // Convert month string "March" to number "3" for the URL
         const monthNum = MONTHS.indexOf(r.month) + 1;
-        // Build the URL to pass the data to your timesheet page
-        const link = `timesheet.html?cutoff=${r.cutoff}&month=${monthNum}&year=${r.year}`;
+        
+        // Link to the Timesheets dashboard with exact parameters
+        const link = `timesheets-test.html?cutoff=${r.cutoff}&month=${monthNum}&year=${r.year}`;
 
         return `
         <tr>
-          <td><strong>${r.month} ${r.year}</strong></td>
+          <td class="col-date">${r.month} ${r.year}</td>
           <td>${r.cutoff === 'Q1' ? 'Cutoff 1 (1st–15th)' : 'Cutoff 2 (16th–EOM)'}</td>
-          <td><span class="badge">Pending Review</span></td>
-          <td style="text-align:right"><a href="${link}" class="btn-review">Open Timesheet</a></td>
+          <td><span class="badge badge-pending">Pending Review</span></td>
+          <td style="text-align:right; padding-right: 20px;"><a href="${link}" class="btn-review">Open Timesheet</a></td>
         </tr>
         `;
       }).join('');
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="4" class="empty-state" style="color:red;">Error loading queue.</td></tr>';
+      tbody.innerHTML = '<tr class="state-row"><td colspan="4" style="color:#dc2626;">Error loading queue. Please check your connection or backend.</td></tr>';
+    } finally {
+      if (btn) btn.classList.remove('loading');
     }
   }
 
-  loadQueue();
+  // Load the queue automatically when the page opens
+  window.addEventListener('DOMContentLoaded', loadQueue);
 </script>
 </body>
 </html>
